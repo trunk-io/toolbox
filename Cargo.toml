@@ -5,7 +5,7 @@ authors = ["horton <horton@trunk.io>"]
 license = "MIT"
 description = "trunk custom issue finder"
 readme = "README.md"
-
+edition = "2018"
 
 [dependencies]
 clap = "3.0.0-beta.4"
