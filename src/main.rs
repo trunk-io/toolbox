@@ -5,9 +5,6 @@ use std::{
     path::Path,
 };
 
-
-
-
 #[derive(Clap)]
 #[clap(version = "0.1", author = "Trunk Technologies Inc.")]
 #[clap(setting = AppSettings::ColoredHelp)]
