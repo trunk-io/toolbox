@@ -1,11 +1,9 @@
+use clap::{AppSettings, Clap};
 use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::Path,
 };
-
-
-use clap::{AppSettings, Clap};
 
 #[derive(Clap)]
 #[clap(version = "0.1", author = "Trunk Technologies Inc.")]
