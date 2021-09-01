@@ -4,7 +4,13 @@ cli:
     linux_x86_64: deded9e4c8db75e944e3c7bd67dcac9c635c26a08c30a8f7fc41fa81bacf6f36
   version: 0.1.21-alpha
 lint:
+  linters:
+    - name: horton
+      type: lsp_json
+      files: [ALL]
+      command: ["${workspace}/target/debug/horton", "--file", "${path}"]
   enabled:
     - gitleaks@7.5.0
+    - horton
     - prettier@2.3.2
 version: 0.1
