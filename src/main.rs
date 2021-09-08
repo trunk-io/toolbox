@@ -42,7 +42,7 @@ fn main() {
 
     for (i, line) in lines_view(Path::new(&opts.file)).iter().enumerate() {
         // TRUNK-IGNORE(horton/do-not-land)
-        if line.trim_end().ends_with("NOCHECK(horton/do-not-land)") {
+        if line.trim_end().ends_with("TRUNK-IGNORE(horton/do-not-land)") {
             continue;
         }
         let maybe_match = re.find(&line);
