@@ -41,7 +41,7 @@ fn main() {
     };
 
     for (i, line) in lines_view(Path::new(&opts.file)).iter().enumerate() {
-        // TRUNK-IGNORE(horton/do-not-land)
+        // trunk-ignore(horton/do-not-land)
         if line.trim_end().ends_with("TRUNK-IGNORE(horton/do-not-land)") {
             continue;
         }
@@ -62,7 +62,7 @@ fn main() {
                 },
             },
             severity: lsp_json::Severity::Error,
-            // TRUNK-IGNORE(horton/do-not-land)
+            // trunk-ignore(horton/do-not-land)
             code: "do-not-land".to_string(),
             message: format!("Found '{}'", m.as_str()),
         });
