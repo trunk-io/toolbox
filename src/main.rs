@@ -41,8 +41,8 @@ fn main() {
     };
 
     for (i, line) in lines_view(Path::new(&opts.file)).iter().enumerate() {
-        // NOCHECK(horton/do-not-land)
-        if line.trim_end().ends_with("NOCHECK(horton/do-not-land)") {
+        // trunk-ignore(horton/do-not-land)
+        if line.contains("trunk-ignore(horton/do-not-land)") {
             continue;
         }
         let maybe_match = re.find(&line);
@@ -62,7 +62,7 @@ fn main() {
                 },
             },
             severity: lsp_json::Severity::Error,
-            // NOCHECK(horton/do-not-land)
+            // trunk-ignore(horton/do-not-land)
             code: "do-not-land".to_string(),
             message: format!("Found '{}'", m.as_str()),
         });
