@@ -1,16 +1,20 @@
+version: 0.1
 cli:
+  version: 0.1.33-alpha
   sha256:
-    darwin_x86_64: 66703ce915d1154f1018b3fa64f7c6dc18accdde01c1a2dd478a5dedb00d8e65
-    linux_x86_64: deded9e4c8db75e944e3c7bd67dcac9c635c26a08c30a8f7fc41fa81bacf6f36
-  version: 0.1.21-alpha
+    darwin_x86_64: f1ee343cc08c7646711b3553b055198f3052b03114544df65367d94cec0fc4e9
+    linux_x86_64: 2ff4574f4e1d93162a3b2243c9e6f8926edb85885adc297e169495c0801e84cb
 lint:
   linters:
     - name: horton
       type: lsp_json
       files: [ALL]
       command: ["${workspace}/target/debug/horton", "--file", "${path}"]
+      success_codes: [0, 1]
   enabled:
-    - gitleaks@7.5.0
-    - horton
-    - prettier@2.3.2
-version: 0.1
+    - actionlint@1.6.8
+    - clippy@1.56.1
+    - gitleaks@7.6.1
+    - markdownlint@0.29.0
+    - prettier@2.4.1
+    - rustfmt@1.56.1
