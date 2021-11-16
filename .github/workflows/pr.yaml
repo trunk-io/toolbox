@@ -6,7 +6,8 @@ concurrency:
 
 jobs:
   trunk_check_runner:
-    name: Trunk Check runner [linux]    
+    name: Trunk Check runner [linux]
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout

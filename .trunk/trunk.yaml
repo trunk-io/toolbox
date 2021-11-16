@@ -10,8 +10,8 @@ lint:
       type: lsp_json
       files: [ALL]
       command: ["${workspace}/target/debug/horton", "--file", "${path}"]
-      success_codes: [0,1]
-  enabled: 
+      success_codes: [0, 1]
+  enabled:
     - actionlint@1.6.8
     - clippy@1.56.1
     - gitleaks@7.6.1
