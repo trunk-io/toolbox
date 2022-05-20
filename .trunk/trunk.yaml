@@ -11,7 +11,7 @@ cli:
 lint:
   linters:
     - name: horton
-      type: lsp_json
+      type: sarif
       files: [ALL]
       command: ["${workspace}/target/debug/horton", "--file", "${path}"]
       success_codes: [0, 1]

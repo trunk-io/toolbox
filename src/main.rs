@@ -1,70 +1,93 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-
-use anyhow::Context;
 use clap::Parser;
-use horton::lsp_json;
-use regex::Regex;
+use horton::diagnostic;
+use horton::git;
+use horton::rules::if_change_then_change::ictc;
+use horton::rules::pls_no_land::pls_no_land;
+use serde_sarif::sarif;
 
 #[derive(Parser, Debug)]
 #[clap(version = "0.1", author = "Trunk Technologies Inc.")]
 struct Opts {
-    #[clap(short, long)]
-    file: String,
-}
-
-type LinesView = Vec<String>;
-
-fn lines_view<R: BufRead>(reader: R) -> anyhow::Result<LinesView> {
-    let mut ret: LinesView = LinesView::default();
-    for line in reader.lines() {
-        let line = line?;
-        ret.push(line);
-    }
-    Ok(ret)
+    #[clap(long)]
+    // #[arg(default_value_t = String::from("refs/heads/main"))]
+    #[arg(default_value_t = String::from("HEAD"))]
+    upstream: String,
 }
 
 fn run() -> anyhow::Result<()> {
     let opts: Opts = Opts::parse();
-    let re = Regex::new(r"(?i)(DO[\s_-]+NOT[\s_-]+LAND)").unwrap();
 
-    let in_file =
-        File::open(&opts.file).with_context(|| format!("failed to open: {}", opts.file))?;
-    let in_buff = BufReader::new(in_file);
-    let lines_view = lines_view(in_buff).context("failed to build lines view")?;
-    let mut ret = lsp_json::LspJson::default();
+    let mut ret = diagnostic::Diagnostics {
+        diagnostics: Vec::new(),
+    };
+    let modified = git::modified_since(&opts.upstream)?;
 
-    for (i, line) in lines_view.iter().enumerate() {
-        // trunk-ignore(horton/do-not-land)
-        if line.contains("trunk-ignore(horton/do-not-land)") {
-            continue;
-        }
-        let m = if let Some(m) = re.find(line) {
-            m
-        } else {
-            continue;
-        };
+    ret.diagnostics.extend(pls_no_land(&modified.paths)?);
+    ret.diagnostics.extend(ictc(&modified.hunks)?);
 
-        ret.diagnostics.push(lsp_json::Diagnostic {
-            range: lsp_json::Range {
-                start: lsp_json::Position {
-                    line: i as u64,
-                    character: m.start() as u64,
-                },
-                end: lsp_json::Position {
-                    line: i as u64,
-                    character: m.end() as u64,
-                },
-            },
-            severity: lsp_json::Severity::Error,
-            // trunk-ignore(horton/do-not-land)
-            code: "do-not-land".to_string(),
-            message: format!("Found '{}'", m.as_str()),
-        });
-    }
+    // TODO(sam): figure out how to stop using unwrap() inside the map() calls below
+    let results: Vec<sarif::Result> = ret
+        .diagnostics
+        .iter()
+        .map(|d| {
+            sarif::ResultBuilder::default()
+                .level("error")
+                .locations([sarif::LocationBuilder::default()
+                    .physical_location(
+                        sarif::PhysicalLocationBuilder::default()
+                            .artifact_location(
+                                sarif::ArtifactLocationBuilder::default()
+                                    .uri(d.range.path.clone())
+                                    .build()
+                                    .unwrap(),
+                            )
+                            .region(
+                                sarif::RegionBuilder::default()
+                                    .start_line(d.range.start.line as i64 + 1)
+                                    .start_column(d.range.start.character as i64 + 1)
+                                    .end_line(d.range.end.line as i64 + 1)
+                                    .end_column(d.range.end.character as i64 + 1)
+                                    .build()
+                                    .unwrap(),
+                            )
+                            .build()
+                            .unwrap(),
+                    )
+                    .build()
+                    .unwrap()])
+                .message(
+                    sarif::MessageBuilder::default()
+                        .text(d.message.clone())
+                        .build()
+                        .unwrap(),
+                )
+                .rule_id(d.code.clone())
+                .build()
+                .unwrap()
+        })
+        .collect();
 
-    let diagnostics_str = ret.to_string()?;
-    println!("{}", diagnostics_str);
+    let run = sarif::RunBuilder::default()
+        .tool(
+            sarif::ToolBuilder::default()
+                .driver(
+                    sarif::ToolComponentBuilder::default()
+                        .name("horton")
+                        .build()
+                        .unwrap(),
+                )
+                .build()
+                .unwrap(),
+        )
+        .results(results)
+        .build()?;
+    let sarif_built = sarif::SarifBuilder::default()
+        .version("2.1.0")
+        .runs([run])
+        .build()?;
+
+    let sarif = serde_json::to_string_pretty(&sarif_built)?;
+    println!("{}", sarif);
 
     Ok(())
 }
