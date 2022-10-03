@@ -13,6 +13,7 @@ use horton::lsp_json;
 #[derive(Parser, Debug)]
 #[clap(version = "0.1", author = "Trunk Technologies Inc.")]
 struct Opts {
+    #[clap(short, long)]
     file: String,
 }
 
