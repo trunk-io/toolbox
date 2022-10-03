@@ -1,9 +1,13 @@
 version: 0.1
+runtimes:
+  enabled:
+    - go@1.18.3
+    - node@16.14.2
 cli:
-  version: 0.1.33-alpha
+  version: 0.18.1-beta
   sha256:
-    darwin_x86_64: f1ee343cc08c7646711b3553b055198f3052b03114544df65367d94cec0fc4e9
-    linux_x86_64: 2ff4574f4e1d93162a3b2243c9e6f8926edb85885adc297e169495c0801e84cb
+    darwin_x86_64: 6a7a4f9c5d0ad7d3d5ea45e6a1cf11a668ea68c36f01ebe31ef95f99560a6824
+    linux_x86_64: d875fe70c221d6449a9cd09598ab278133c5513f52dbf6af0fca3161d7a39d46
 lint:
   linters:
     - name: horton
@@ -12,9 +16,11 @@ lint:
       command: ["${workspace}/target/debug/horton", "--file", "${path}"]
       success_codes: [0, 1]
   enabled:
-    - actionlint@1.6.8
-    - clippy@1.56.1
-    - gitleaks@7.6.1
-    - markdownlint@0.29.0
-    - prettier@2.4.1
-    - rustfmt@1.56.1
+    - git-diff-check
+    - taplo@release-taplo-cli-0.7.0
+    - actionlint@1.6.20
+    - clippy@1.64.0
+    - gitleaks@8.13.0
+    - markdownlint@0.32.2
+    - prettier@2.7.1
+    - rustfmt@1.64.0

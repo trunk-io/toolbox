@@ -1,19 +1,17 @@
-extern crate clap;
-extern crate regex;
+use clap::Parser;
 
-mod lsp_json;
-
-use clap::{AppSettings, Clap};
 use regex::Regex;
+
 use std::{
     fs::File,
     io::{BufRead, BufReader},
     path::Path,
 };
 
-#[derive(Clap)]
+use horton::lsp_json;
+
+#[derive(Parser, Debug)]
 #[clap(version = "0.1", author = "Trunk Technologies Inc.")]
-#[clap(setting = AppSettings::ColoredHelp)]
 struct Opts {
     #[clap(short, long)]
     file: String,
