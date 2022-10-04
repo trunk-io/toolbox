@@ -1,11 +1,10 @@
-use anyhow::Context;
-use clap::Parser;
-use regex::Regex;
-
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+use anyhow::Context;
+use clap::Parser;
 use horton::lsp_json;
+use regex::Regex;
 
 #[derive(Parser, Debug)]
 #[clap(version = "0.1", author = "Trunk Technologies Inc.")]
