@@ -1,0 +1,11 @@
+{
+  "editor.defaultFormatter": "trunk.io",
+  "files.exclude": {
+    "**/.trunk/*out": true,
+    "target/**": true
+  },
+  "files.watcherExclude": {
+    "**/.trunk/*out": true,
+    "target/**": true
+  }
+}
