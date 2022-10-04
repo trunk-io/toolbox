@@ -1,12 +1,9 @@
+use anyhow::Context;
 use clap::Parser;
-
 use regex::Regex;
 
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-    path::Path,
-};
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 use horton::lsp_json;
 
@@ -17,37 +14,38 @@ struct Opts {
     file: String,
 }
 
-fn lines_view(filename: &Path) -> Vec<String> {
-    let file = match File::open(filename) {
-        Ok(file) => file,
-        Err(_) => panic!("Unable to open file {}", filename.display()),
-    };
-    let buffer = BufReader::new(file);
-    return buffer
-        .lines()
-        .map(|l| l.expect("Could not parse line"))
-        .collect();
+type LinesView = Vec<String>;
+
+fn lines_view<R: BufRead>(reader: R) -> anyhow::Result<LinesView> {
+    let mut ret: LinesView = LinesView::default();
+    for line in reader.lines() {
+        let line = line?;
+        ret.push(line);
+    }
+    Ok(ret)
 }
 
-fn main() {
+fn run() -> anyhow::Result<()> {
     let opts: Opts = Opts::parse();
-
     let re = Regex::new(r"(?i)(DO[\s_-]+NOT[\s_-]+LAND)").unwrap();
 
-    let mut ret = lsp_json::LspJson {
-        diagnostics: Vec::new(),
-    };
+    let in_file =
+        File::open(&opts.file).with_context(|| format!("failed to open: {}", opts.file))?;
+    let in_buff = BufReader::new(in_file);
+    let lines_view = lines_view(in_buff).context("failed to build lines view")?;
+    let mut ret = lsp_json::LspJson::default();
 
-    for (i, line) in lines_view(Path::new(&opts.file)).iter().enumerate() {
+    for (i, line) in lines_view.iter().enumerate() {
         // trunk-ignore(horton/do-not-land)
         if line.contains("trunk-ignore(horton/do-not-land)") {
             continue;
         }
-        let maybe_match = re.find(&line);
-        if maybe_match.is_none() {
+        let m = if let Some(m) = re.find(line) {
+            m
+        } else {
             continue;
-        }
-        let m = maybe_match.unwrap();
+        };
+
         ret.diagnostics.push(lsp_json::Diagnostic {
             range: lsp_json::Range {
                 start: lsp_json::Position {
@@ -66,12 +64,20 @@ fn main() {
         });
     }
 
-    match ret.to_string() {
-        Ok(s) => {
-            println!("{}", s)
-        }
+    let diagnostics_str = ret.to_string()?;
+    println!("{}", diagnostics_str);
+
+    Ok(())
+}
+
+fn main() {
+    env_logger::init();
+
+    match run() {
+        Ok(_) => (),
         Err(err) => {
-            panic!("Failed to serialize diagnostics, error was: {}", err)
+            log::error!("{}", err);
+            std::process::exit(1);
         }
     }
 }
