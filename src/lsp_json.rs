@@ -28,16 +28,14 @@ pub struct Diagnostic {
     pub message: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Default)]
 pub struct LspJson {
     pub diagnostics: Vec<Diagnostic>,
 }
 
 impl LspJson {
-    pub fn to_string(&self) -> Result<String, String> {
-        return match serde_json::to_string(&self) {
-            serde_json::Result::Ok(s) => Ok(s),
-            serde_json::Result::Err(err) => Err(err.to_string()),
-        };
+    pub fn to_string(&self) -> anyhow::Result<String> {
+        let as_string = serde_json::to_string(&self)?;
+        Ok(as_string)
     }
 }
