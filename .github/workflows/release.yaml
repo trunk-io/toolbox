@@ -15,3 +15,6 @@ jobs:
 
       - name: Build --release
         run: cargo build --release
+
+      - name: Upload to GitHub
+        run: echo "gh release upload $tag $file1 $file2"
