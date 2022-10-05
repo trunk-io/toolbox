@@ -11,8 +11,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Cargo Test
         run: cargo test
