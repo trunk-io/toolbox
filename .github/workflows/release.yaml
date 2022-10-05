@@ -1,0 +1,17 @@
+name: Release Horton CLI
+on:
+  workflow_dispatch: {}
+concurrency: ${{ github.workflow }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions-rs/toolchain@v1
+
+      - name: Build --release
+        run: cargo build --release
