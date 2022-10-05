@@ -17,9 +17,7 @@ struct Opts {
 fn run() -> anyhow::Result<()> {
     let opts: Opts = Opts::parse();
 
-    let mut ret = diagnostic::Diagnostics {
-        diagnostics: Vec::new(),
-    };
+    let mut ret = diagnostic::Diagnostics::default();
     let modified = git::modified_since(&opts.upstream)?;
 
     ret.diagnostics.extend(pls_no_land(&modified.paths)?);

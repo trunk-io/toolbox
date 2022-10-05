@@ -49,32 +49,29 @@ pub fn ictc(hunks: &Vec<Hunk>) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
             .enumerate()
             .map(|(i, line)| (i + 1, line))
         {
-            let maybe_begin = RE_BEGIN.find(line);
-            let maybe_end = RE_END.captures(line);
-
-            if maybe_begin.is_some() {
+            if RE_BEGIN.find(line).is_some() {
                 ifttt_begin = i as i64;
-            } else if maybe_end.is_some() && ifttt_begin != -1 {
-                let block = IctcBlock {
-                    path: h.path.clone(),
-                    begin: ifttt_begin,
-                    end: i as i64,
-                    thenchange: PathBuf::from(maybe_end.unwrap().get(2).unwrap().as_str()),
-                };
-                // println!("Found block\n{:#?}", block);
+            } else if let Some(end) = RE_END.captures(line) {
+                if ifttt_begin != -1 {
+                    let block = IctcBlock {
+                        path: h.path.clone(),
+                        begin: ifttt_begin,
+                        end: i as i64,
+                        thenchange: PathBuf::from(end.get(2).unwrap().as_str()),
+                    };
 
-                let mut block_lines = HashSet::new();
-                block_lines.extend(block.begin..block.end);
+                    let block_lines = HashSet::from_iter(block.begin..block.end);
 
-                if !block_lines.is_disjoint(
-                    modified_lines_by_path
-                        .get(&block.path)
-                        .unwrap_or(&HashSet::new()),
-                ) {
-                    blocks.push(block);
+                    if !block_lines.is_disjoint(
+                        modified_lines_by_path
+                            .get(&block.path)
+                            .unwrap_or(&HashSet::new()),
+                    ) {
+                        blocks.push(block);
+                    }
+
+                    ifttt_begin = -1;
                 }
-
-                ifttt_begin = -1;
             }
         }
     }
