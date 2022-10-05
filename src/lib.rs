@@ -1,1 +1,3 @@
-pub mod lsp_json;
+pub mod diagnostic;
+pub mod git;
+pub mod rules;

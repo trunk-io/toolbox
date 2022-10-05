@@ -16,6 +16,7 @@ pub struct Position {
 
 #[derive(Serialize)]
 pub struct Range {
+    pub path: String,
     pub start: Position,
     pub end: Position,
 }
@@ -29,11 +30,11 @@ pub struct Diagnostic {
 }
 
 #[derive(Serialize, Default)]
-pub struct LspJson {
+pub struct Diagnostics {
     pub diagnostics: Vec<Diagnostic>,
 }
 
-impl LspJson {
+impl Diagnostics {
     pub fn to_string(&self) -> anyhow::Result<String> {
         let as_string = serde_json::to_string(&self)?;
         Ok(as_string)
