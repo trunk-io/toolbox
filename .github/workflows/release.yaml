@@ -26,4 +26,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           #gh release create 0.0.0-sam.0 --generate-notes
-          gh release upload 0.0.0-sam.0 target/release/x86_64-unknown-linux-gnu
+          gh release upload 0.0.0-sam.0 target/x86_64-unknown-linux-gnu/release/horton
