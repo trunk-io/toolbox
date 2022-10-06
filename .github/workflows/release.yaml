@@ -28,5 +28,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.events.input.release_tag }} --generate-notes
-          gh release upload ${{ github.events.input.release_tag }} target/x86_64-unknown-linux-gnu/release/horton
+          gh release create ${{ github.event.input.release_tag }} --generate-notes
+          gh release upload ${{ github.event.input.release_tag }} target/x86_64-unknown-linux-gnu/release/horton
