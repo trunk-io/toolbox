@@ -25,9 +25,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ls -al . || true
-          ls -al target/ || true
-          ls -al target/debug/ || true
-          ls -al target/release/ || true
           #gh release create 0.0.0-sam.0 --generate-notes
-          gh release upload 0.0.0-sam.0 target/release/horton
+          gh release upload 0.0.0-sam.0 target/release/x86_64-unknown-linux-gnu

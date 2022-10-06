@@ -1,6 +1,6 @@
 [package]
 name = "horton"
-version = "0.0.1"
+version = "0.0.0-sam.0"
 authors = ["horton <horton@trunk.io>"]
 license = "MIT"
 description = "trunk custom issue finder"
