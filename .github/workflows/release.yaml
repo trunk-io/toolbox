@@ -1,12 +1,15 @@
 name: Release Horton CLI
 on:
-  workflow_dispatch: {}
-  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        type: string
+        description: Tag to create (from latest main)
 concurrency: ${{ github.workflow }}
 
 jobs:
-  build:
-    name: Build
+  build_tag_and_release:
+    name: Build, Tag, and Release
     runs-on: ubuntu-latest
 
     steps:
@@ -21,9 +24,9 @@ jobs:
       - name: Build --release
         run: cargo build --release --target x86_64-unknown-linux-gnu
 
-      - name: Upload to GitHub
+      - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          #gh release create 0.0.0-sam.0 --generate-notes
-          gh release upload 0.0.0-sam.0 target/x86_64-unknown-linux-gnu/release/horton
+          gh release create ${{ github.events.input.release_tag }} --generate-notes
+          gh release upload ${{ github.events.input.release_tag }} target/x86_64-unknown-linux-gnu/release/horton
