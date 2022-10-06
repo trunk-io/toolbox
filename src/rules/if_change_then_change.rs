@@ -19,8 +19,8 @@ pub struct IctcBlock {
 }
 
 lazy_static::lazy_static! {
-    static ref RE_BEGIN: Regex = Regex::new(r" *(//|#) *ifchange").unwrap();
-    static ref RE_END: Regex = Regex::new(r" *(//|#) *thenchange (.*)").unwrap();
+    static ref RE_BEGIN: Regex = Regex::new(r"(?i) *(//|#) *ifchange").unwrap();
+    static ref RE_END: Regex = Regex::new(r"(?i) *(//|#) *thenchange (.*)").unwrap();
 
 }
 
