@@ -18,11 +18,15 @@ jobs:
         run: rustup target add x86_64-unknown-linux-gnu
 
       - name: Build --release
-        run: cargo build --release --target x86_64-unknown-linux-gnu
+        run: cargo build --locked --release --target x86_64-unknown-linux-gnu
 
       - name: Upload to GitHub
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create 0.0.0-sam.0 --generate-notes
+          ls -al . || true
+          ls -al target/ || true
+          ls -al target/debug/ || true
+          ls -al target/release/ || true
+          #gh release create 0.0.0-sam.0 --generate-notes
           gh release upload 0.0.0-sam.0 target/release/horton
