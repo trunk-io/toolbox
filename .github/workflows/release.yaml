@@ -9,7 +9,7 @@ concurrency: ${{ github.workflow }}
 
 jobs:
   build_tag_and_release:
-    name: Build, Tag, and Release
+    name: Build, Tag, and Release [ ${{ github.event.inputs.release_tag }}]
     runs-on: ubuntu-latest
 
     steps:
@@ -28,5 +28,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.event.input.release_tag }} --generate-notes
-          gh release upload ${{ github.event.input.release_tag }} target/x86_64-unknown-linux-gnu/release/horton
+          gh release create ${{ github.event.inputs.release_tag }} --generate-notes
+          gh release upload ${{ github.event.inputs.release_tag }} target/x86_64-unknown-linux-gnu/release/horton
