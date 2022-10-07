@@ -1,0 +1,32 @@
+name: Release Horton CLI
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        type: string
+        description: Tag to create (from latest main)
+concurrency: ${{ github.workflow }}
+
+jobs:
+  build_tag_and_release:
+    name: Build, Tag, and Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+
+      # TODO(sam): set up macos build
+      - name: Set up toolchains
+        run: rustup target add x86_64-unknown-linux-gnu
+
+      # TODO(sam): cargo build --locked
+      - name: Build --release
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Create GH release and upload binary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.event.input.release_tag }} --generate-notes
+          gh release upload ${{ github.event.input.release_tag }} target/x86_64-unknown-linux-gnu/release/horton

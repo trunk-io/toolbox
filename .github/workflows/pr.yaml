@@ -5,6 +5,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build_and_test:
+    name: Cargo Test [linux]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cargo Test
+        run: cargo test
+
   trunk_check_runner:
     name: Trunk Check runner [linux]
     runs-on: ubuntu-latest
@@ -21,4 +32,4 @@ jobs:
           key: trunk-${{ runner.os }}
 
       - name: Trunk Check
-        uses: trunk-io/trunk-action@v0.2.0-alpha
+        uses: trunk-io/trunk-action@v1.0.4

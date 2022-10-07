@@ -20,6 +20,8 @@ fn run() -> anyhow::Result<()> {
     let mut ret = diagnostic::Diagnostics::default();
     let modified = git::modified_since(&opts.upstream)?;
 
+    log::debug!("Modified stats, per libgit2:\n{:#?}", modified);
+
     ret.diagnostics.extend(pls_no_land(&modified.paths)?);
     ret.diagnostics.extend(ictc(&modified.hunks)?);
 
