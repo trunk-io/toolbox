@@ -9,7 +9,7 @@ concurrency: ${{ github.workflow }}
 
 jobs:
   build_tag_and_release:
-    name: Build, Tag, and Release [ my_value: ${{ github.event.inputs.release_tag }}]
+    name: Build, Tag, and Release [ ${{ github.event.inputs.release_tag }}]
     runs-on: ubuntu-latest
 
     steps:
