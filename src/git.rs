@@ -23,7 +23,9 @@ pub fn modified_since(upstream: &str) -> anyhow::Result<NewOrModified> {
 
     let upstream_tree = match repo.find_reference(upstream) {
         Ok(reference) => reference.peel_to_tree()?,
-        _ => repo.find_object(Oid::from_str(upstream)?, None)?.peel_to_tree()?,
+        _ => repo
+            .find_object(Oid::from_str(upstream)?, None)?
+            .peel_to_tree()?,
     };
 
     let diff = {
