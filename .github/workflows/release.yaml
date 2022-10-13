@@ -23,6 +23,8 @@ jobs:
       # TODO(sam): cargo build --locked
       - name: Build --release
         run: cargo build --release --target x86_64-unknown-linux-gnu
+        env:
+          HORTON_RELEASE: ${{ github.event.inputs.release_tag }}
 
       - name: Create GH release and upload binary
         env:
