@@ -4,7 +4,7 @@ on:
     inputs:
       release_tag:
         type: string
-        description: Tag to create (from latest main)
+        description: Tag to create
 concurrency: ${{ github.workflow }}
 
 jobs:
