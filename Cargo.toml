@@ -10,7 +10,7 @@ edition = "2021"
 build = "build.rs"
 
 [lib]
-name = "trunk-toolbox"
+name = "horton"
 path = "src/lib.rs"
 
 [dependencies]
