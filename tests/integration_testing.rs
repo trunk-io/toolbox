@@ -70,7 +70,7 @@ impl TestRepo {
     }
 
     pub fn run_horton(&self) -> Result<String, Box<dyn Error>> {
-        let mut cmd = Command::cargo_bin("horton")?;
+        let mut cmd = Command::cargo_bin("trunk-toolbox")?;
 
         cmd.env("RUST_LOG", "debug");
         cmd.arg("--upstream")
