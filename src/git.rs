@@ -1,4 +1,4 @@
-use git2::{Delta, DiffOptions, Repository};
+use git2::{Delta, DiffOptions, Oid, Repository};
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -21,7 +21,10 @@ pub struct NewOrModified {
 pub fn modified_since(upstream: &str) -> anyhow::Result<NewOrModified> {
     let repo = Repository::open(".")?;
 
-    let upstream_tree = repo.find_reference(upstream)?.peel_to_tree()?;
+    let upstream_tree = match repo.find_reference(upstream) {
+        Ok(reference) => reference.peel_to_tree()?,
+        _ => repo.find_object(Oid::from_str(upstream)?, None)?.peel_to_tree()?,
+    };
 
     let diff = {
         let mut diff_opts = DiffOptions::new();
