@@ -67,6 +67,7 @@ jobs:
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # trunk-ignore(actionlint/expression): download-path _is_ defined by actions/download-artifact
         run: |
           gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes
-          gh release upload ${{ github.event.inputs.release_tag }} ${{steps.download.outputs.download-path}}
+          gh release upload ${{ github.event.inputs.release_tag }} ${{ steps.download.outputs.download-path }}
