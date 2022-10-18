@@ -53,33 +53,22 @@ jobs:
           name: aarch64-apple-darwin
           path: target/aarch64-apple-darwin/release/trunk-toolbox
 
-  tag:
-    name: Tag [ ${{ github.event.inputs.release_tag }} ]
+  tag_and_release:
+    name: Tag and Release [ ${{ github.event.inputs.release_tag }} ]
     runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Create GH release and upload binary
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes
-
-  release:
-    name: Release [ ${{ github.event.inputs.release_tag }} ]
-    runs-on: ubuntu-latest
-    needs: [build_linux, build_macos, tag]
+    needs: [build_linux, build_macos]
 
     steps:
       - uses: actions/checkout@v3
 
       - id: download
         uses: actions/download-artifact@v3
+        path: artifacts
 
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # trunk-ignore(actionlint/expression): download-path _is_ defined by actions/download-artifact
         run: |
-          gh release upload ${{ github.event.inputs.release_tag }} ${{ steps.download.outputs.download-path }}
+          gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes
+          gh release upload ${{ github.event.inputs.release_tag }} artifacts
