@@ -56,8 +56,11 @@ jobs:
   tag_and_release:
     name: Tag and Release [ ${{ github.event.inputs.release_tag }} ]
     runs-on: ubuntu-latest
+    needs: [build_linux, build_macos]
 
     steps:
+      - uses: actions/checkout@v3
+
       - id: download
         uses: actions/download-artifact@v3
 
