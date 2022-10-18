@@ -65,6 +65,12 @@ jobs:
         uses: actions/download-artifact@v3
         path: artifacts
 
+      - id: debug
+        run: |
+          ls -R artifacts
+          ls -R .
+          echo $(pwd)
+
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
