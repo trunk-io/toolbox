@@ -63,7 +63,8 @@ jobs:
 
       - id: download
         uses: actions/download-artifact@v3
-        path: artifacts
+        with:
+          path: artifacts
 
       - id: debug
         run: |
@@ -74,7 +75,6 @@ jobs:
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # trunk-ignore(actionlint/expression): download-path _is_ defined by actions/download-artifact
         run: |
           gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes
           gh release upload ${{ github.event.inputs.release_tag }} artifacts
