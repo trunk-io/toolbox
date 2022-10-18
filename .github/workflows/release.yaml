@@ -66,15 +66,16 @@ jobs:
         with:
           path: artifacts
 
-      - id: debug
-        run: |
-          ls -R artifacts
-          ls -R .
-          echo $(pwd)
+      - name: Compress binaries
+        run:
+          for target in x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
+          do
+            tar czvf trunk-toolbox-${target}.tar.gz -C artifacts/${target} trunk-toolbox
+          done
+          rm -rf artifacts
 
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes
-          gh release upload ${{ github.event.inputs.release_tag }} artifacts
