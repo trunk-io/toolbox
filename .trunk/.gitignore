@@ -2,3 +2,6 @@
 *logs
 *actions
 *notifications
+plugins
+user_trunk.yaml
+user.yaml
