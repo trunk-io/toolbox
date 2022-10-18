@@ -9,7 +9,7 @@ concurrency: ${{ github.workflow }}
 
 jobs:
   build_linux:
-    name: Build Linux [ ${{ github.event.inputs.release_tag }} ]
+    name: Build Linux
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -29,8 +29,8 @@ jobs:
           path: target/x86_64-unknown-linux-gnu/release/trunk-toolbox
 
   build_macos:
-    name: Build macOS [ ${{ github.event.inputs.release_tag }} ]
-    runs-on: [self-hosted, macOS, prod]
+    name: Build macOS
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
