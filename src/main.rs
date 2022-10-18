@@ -6,7 +6,7 @@ use horton::rules::pls_no_land::pls_no_land;
 use serde_sarif::sarif;
 
 #[derive(Parser, Debug)]
-#[clap(version = "0.1", author = "Trunk Technologies Inc.")]
+#[clap(version = env!("CARGO_PKG_VERSION"), author = "Trunk Technologies Inc.")]
 struct Opts {
     #[clap(long)]
     // #[arg(default_value_t = String::from("refs/heads/main"))]

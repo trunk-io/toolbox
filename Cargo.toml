@@ -1,11 +1,13 @@
 [package]
-name = "horton"
-version = "0.0.0-sam.0"
+name = "trunk-toolbox"
+# build.rs bypasses package.version, instead using $HORTON_RELEASE and falls back to the current ref
+version = "0.0.0"
 authors = ["horton <horton@trunk.io>"]
 license = "MIT"
 description = "trunk custom issue finder"
 readme = "README.md"
 edition = "2021"
+build = "build.rs"
 
 [lib]
 name = "horton"
