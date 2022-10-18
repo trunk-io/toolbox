@@ -9,7 +9,7 @@ use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
 lazy_static::lazy_static! {
-    static ref RE: Regex = Regex::new(r"(?i)(DO[\s_-]+NOT[\s_-]+LAND)").unwrap();
+    static ref RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
 }
 
 // Checks for $re and other forms thereof in source code
@@ -44,7 +44,7 @@ fn pls_no_land_impl(path: &PathBuf) -> anyhow::Result<Vec<diagnostic::Diagnostic
     let mut ret = Vec::new();
 
     for (i, line) in lines_view.iter().enumerate() {
-        if line.contains("trunk-ignore(|-begin|-end|-all)\\(horton/do-not-land\\)") {
+        if line.contains("trunk-ignore(|-begin|-end|-all)\\(trunk-toolbox/do-not-land\\)") {
             continue;
         }
 
