@@ -97,11 +97,9 @@ pub fn ictc(hunks: &Vec<Hunk>) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
             severity: diagnostic::Severity::Error,
             code: "if-change-then-change".to_string(),
             message: format!(
-                "Expected change in {} because {}[{}, {}) was modified",
+                "Expected change in {} because {} was modified",
                 b.thenchange.display(),
                 b.path.display(),
-                b.begin,
-                b.end,
             ),
         })
         .collect();
