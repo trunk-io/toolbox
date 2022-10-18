@@ -8,27 +8,62 @@ on:
 concurrency: ${{ github.workflow }}
 
 jobs:
-  build_tag_and_release:
-    name: Build, Tag, and Release [ ${{ github.event.inputs.release_tag }} ]
+  build_linux:
+    name: Build Linux [ ${{ github.event.inputs.release_tag }} ]
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
 
-      # TODO(sam): set up macos build
       - name: Set up toolchains
         run: rustup target add x86_64-unknown-linux-gnu
 
-      # TODO(sam): cargo build --locked
       - name: Build --release
         run: cargo build --release --target x86_64-unknown-linux-gnu
         env:
           HORTON_RELEASE: ${{ github.event.inputs.release_tag }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/release/trunk-toolbox
+
+  build_macos:
+    name: Build macOS [ ${{ github.event.inputs.release_tag }} ]
+    runs-on: [self-hosted, macOS, prod]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up toolchains
+        run: rustup target add x86_64-apple-darwin
+
+      - name: Build --release
+        run: cargo build --release --target x86_64-apple-darwin --target aarch64-apple-darwin
+        env:
+          HORTON_RELEASE: ${{ github.event.inputs.release_tag }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: x86_64-apple-darwin
+          path: target/x86_64-apple-darwin/release/trunk-toolbox
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: aarch64-apple-darwin
+          path: target/aarch64-apple-darwin/release/trunk-toolbox
+
+  tag_and_release:
+    name: Tag and Release [ ${{ github.event.inputs.release_tag }} ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: download
+        uses: actions/download-artifact@v3
 
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes
-          gh release upload ${{ github.event.inputs.release_tag }} target/x86_64-unknown-linux-gnu/release/trunk-toolbox
+          gh release upload ${{ github.event.inputs.release_tag }} ${{steps.download.outputs.download-path}}
