@@ -56,12 +56,14 @@ jobs:
         run: |
           for target in $(ls build)
           do
-            tar czvf build/trunk-toolbox-${{ github.event.inputs.release_tag }}-${target}.tar.gz -C build/${target} trunk-toolbox
+            tar czvf \
+              build/trunk-toolbox-${{ github.event.inputs.release_tag }}-${target}.tar.gz \
+              -C build/${target} trunk-toolbox
           done
-          #rm -rf build
 
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes ./build/*.tar.gz
+          gh release create --target ${{ github.ref }} --generate-notes \
+            ${{ github.event.inputs.release_tag }} ./build/*.tar.gz
