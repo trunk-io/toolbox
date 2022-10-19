@@ -8,27 +8,61 @@ on:
 concurrency: ${{ github.workflow }}
 
 jobs:
-  build_tag_and_release:
-    name: Build, Tag, and Release [ ${{ github.event.inputs.release_tag }} ]
-    runs-on: ubuntu-latest
-
+  build:
+    name: Build ${{ matrix.target }}
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runs-on: ubuntu-latest
+          - target: x86_64-apple-darwin
+            runs-on: macos-latest
+          - target: aarch64-apple-darwin
+            runs-on: macos-latest
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
 
-      # TODO(sam): set up macos build
       - name: Set up toolchains
-        run: rustup target add x86_64-unknown-linux-gnu
+        run: rustup target add ${{ matrix.target }}
 
-      # TODO(sam): cargo build --locked
       - name: Build --release
-        run: cargo build --release --target x86_64-unknown-linux-gnu
+        run: cargo build --release --target ${{ matrix.target }}
         env:
           HORTON_RELEASE: ${{ github.event.inputs.release_tag }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/trunk-toolbox
+
+  tag_and_release:
+    name: Tag and Release [ ${{ github.event.inputs.release_tag }} ]
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: download
+        uses: actions/download-artifact@v3
+        with:
+          path: build
+
+      - name: Compress binaries
+        run: |
+          for target in $(ls build)
+          do
+            chmod u+x build/${target}/trunk-toolbox
+            tar czvf \
+              build/trunk-toolbox-${{ github.event.inputs.release_tag }}-${target}.tar.gz \
+              -C build/${target} trunk-toolbox
+          done
 
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes
-          gh release upload ${{ github.event.inputs.release_tag }} target/x86_64-unknown-linux-gnu/release/trunk-toolbox
+          gh release create --target ${{ github.ref }} --generate-notes \
+            ${{ github.event.inputs.release_tag }} ./build/*.tar.gz
