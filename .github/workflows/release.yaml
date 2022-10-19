@@ -28,16 +28,14 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Build --release
-        # DO NOT LAND make this --release
-        run: cargo build --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
         env:
           HORTON_RELEASE: ${{ github.event.inputs.release_tag }}
 
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.target }}
-          # DO NOT LAND make this /release/
-          path: target/${{ matrix.target }}/debug/trunk-toolbox
+          path: target/${{ matrix.target }}/release/trunk-toolbox
 
   tag_and_release:
     name: Tag and Release [ ${{ github.event.inputs.release_tag }} ]
@@ -56,6 +54,7 @@ jobs:
         run: |
           for target in $(ls build)
           do
+            chmod u+x build/${target}/trunk-toolbox
             tar czvf \
               build/trunk-toolbox-${{ github.event.inputs.release_tag }}-${target}.tar.gz \
               -C build/${target} trunk-toolbox
