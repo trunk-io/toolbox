@@ -28,14 +28,16 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Build --release
-        run: cargo build --release --target ${{ matrix.target }}
+        # DO NOT LAND make this --release
+        run: cargo build --target ${{ matrix.target }}
         env:
           HORTON_RELEASE: ${{ github.event.inputs.release_tag }}
 
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/trunk-toolbox
+          # DO NOT LAND make this /release/
+          path: target/${{ matrix.target }}/debug/trunk-toolbox
 
   tag_and_release:
     name: Tag and Release [ ${{ github.event.inputs.release_tag }} ]
@@ -48,18 +50,18 @@ jobs:
       - id: download
         uses: actions/download-artifact@v3
         with:
-          path: artifacts
+          path: build
 
       - name: Compress binaries
         run: |
           for target in x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
           do
-            tar czvf trunk-toolbox-${target}.tar.gz -C artifacts/${target} trunk-toolbox
+            tar czvf build/trunk-toolbox-${target}.tar.gz -C build/${target} trunk-toolbox
           done
-          rm -rf artifacts
+          #rm -rf build
 
       - name: Create GH release and upload binary
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes
+          gh release create --target ${{ github.ref }} ${{ github.event.inputs.release_tag }} --generate-notes ./build/*
