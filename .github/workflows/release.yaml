@@ -54,9 +54,9 @@ jobs:
 
       - name: Compress binaries
         run: |
-          for target in x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
+          for target in $(ls build)
           do
-            tar czvf build/trunk-toolbox-${target}.tar.gz -C build/${target} trunk-toolbox
+            tar czvf build/trunk-toolbox-${{ github.event.inputs.release_tag }}-${target}.tar.gz -C build/${target} trunk-toolbox
           done
           #rm -rf build
 
