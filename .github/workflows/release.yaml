@@ -51,7 +51,7 @@ jobs:
           path: artifacts
 
       - name: Compress binaries
-        run:
+        run: |
           for target in x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin
           do
             tar czvf trunk-toolbox-${target}.tar.gz -C artifacts/${target} trunk-toolbox
