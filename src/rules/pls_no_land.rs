@@ -2,6 +2,7 @@ extern crate regex;
 
 use crate::diagnostic;
 use anyhow::Context;
+use content_inspector::inspect;
 use regex::Regex;
 use std::collections::HashSet;
 use std::fs::File;
@@ -25,25 +26,31 @@ pub fn pls_no_land(paths: &HashSet<PathBuf>) -> anyhow::Result<Vec<diagnostic::D
     Ok(ret)
 }
 
-type LinesView = Vec<String>;
-
-fn lines_view<R: BufRead>(reader: R) -> anyhow::Result<LinesView> {
-    let mut ret: LinesView = LinesView::default();
-    for line in reader.lines() {
-        let line = line?;
-        ret.push(line);
-    }
-    Ok(ret)
-}
-
 fn pls_no_land_impl(path: &PathBuf) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;
-    let in_buf = BufReader::new(in_file);
-    let lines_view = lines_view(in_buf).context("failed to build lines view")?;
+    let mut in_buf = BufReader::new(in_file);
+
+    let mut first_line = vec![];
+    in_buf.read_until(b'\n', &mut first_line)?;
+
+    if first_line.is_empty() || inspect(&first_line[..]).is_binary() {
+        return Ok(vec![]);
+    }
+
+    let first_line_view = String::from_utf8(first_line)
+        .with_context(|| format!("could not read first line of {:#?}", path))?;
+    let lines_view = in_buf
+        .lines()
+        .collect::<std::io::Result<Vec<String>>>()
+        .with_context(|| format!("failed to read lines of text from {:#?}", path))?;
 
     let mut ret = Vec::new();
 
-    for (i, line) in lines_view.iter().enumerate() {
+    for (i, line) in [first_line_view]
+        .iter()
+        .chain(lines_view.iter())
+        .enumerate()
+    {
         if line.contains("trunk-ignore(|-begin|-end|-all)\\(trunk-toolbox/do-not-land\\)") {
             continue;
         }
