@@ -49,7 +49,7 @@ impl TestRepo {
         Ok(TestRepo { dir })
     }
 
-    pub fn write(&self, relpath: &str, data: &str) -> anyhow::Result<()> {
+    pub fn write(&self, relpath: &str, data: &[u8]) -> anyhow::Result<()> {
         let path = {
             let mut path = self.dir.path().to_path_buf();
             path.push(relpath);
