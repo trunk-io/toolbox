@@ -44,7 +44,7 @@ pub fn ictc(hunks: &Vec<Hunk>) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
             File::open(&h.path).with_context(|| format!("failed to open: {:#?}", h.path))?;
         let in_buf = BufReader::new(in_file);
         for (i, line) in lines_view(in_buf)
-            .context("failed to build lines view")?
+            .context(format!("failed to read lines of text from: {:#?}", h.path))?
             .iter()
             .enumerate()
             .map(|(i, line)| (i + 1, line))
