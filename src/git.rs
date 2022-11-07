@@ -103,7 +103,6 @@ pub fn modified_since(upstream: &str) -> anyhow::Result<NewOrModified> {
                                             })
                                         });
                                 } else if let Some(current_hunk) = &maybe_current_hunk {
-                                    log::info!("Appending current hunk {:#?}", current_hunk);
                                     ret.paths.insert(current_hunk.path.clone());
                                     ret.hunks.push(current_hunk.clone());
                                     maybe_current_hunk = None;
@@ -119,13 +118,6 @@ pub fn modified_since(upstream: &str) -> anyhow::Result<NewOrModified> {
                     }
                 }
             }
-            log::info!(
-                "line_cb {:#?} {:#?} {:#?} {:#?}",
-                delta.status(),
-                line.old_lineno().unwrap_or(0),
-                line.new_lineno().unwrap_or(0),
-                String::from_utf8(line.content().to_vec()).unwrap()
-            );
             true
         }),
     )?;
