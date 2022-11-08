@@ -2,7 +2,6 @@ extern crate regex;
 
 use crate::diagnostic;
 use anyhow::Context;
-use content_inspector::inspect;
 use regex::Regex;
 use std::collections::HashSet;
 use std::fs::File;
@@ -33,7 +32,7 @@ fn pls_no_land_impl(path: &PathBuf) -> anyhow::Result<Vec<diagnostic::Diagnostic
     let mut first_line = vec![];
     in_buf.read_until(b'\n', &mut first_line)?;
 
-    if first_line.is_empty() || inspect(&first_line[..]).is_binary() {
+    if first_line.is_empty() {
         return Ok(vec![]);
     }
 

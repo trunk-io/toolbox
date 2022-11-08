@@ -1,16 +1,51 @@
-use assert_cmd::prelude::*; // Add methods on commands
+use assert_cmd::prelude::*;
 
-use std::error::Error;
+use std::fmt;
 use std::fs;
 use std::process::Command;
-use std::result::Result;
 
 pub struct TestRepo {
     dir: tempfile::TempDir,
 }
 
+#[derive(Debug)]
+pub struct HortonOutput {
+    pub stdout: String,
+    pub stderr: String,
+    pub exit_code: Option<i32>,
+}
+
+impl fmt::Display for HortonOutput {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.exit_code {
+            Some(c) => write!(f, "toolbox exit code was {}\n", c)?,
+            None => write!(f, "toolbox exited abnormally\n")?,
+        };
+
+        if self.stdout.is_empty() {
+            write!(f, "toolbox stdout: (empty)\n")?;
+        } else {
+            write!(f, "toolbox stdout:\n{}\n", self.stdout.as_str())?;
+        }
+
+        if self.stderr.is_empty() {
+            write!(f, "toolbox stderr: (empty)\n")
+        } else {
+            write!(f, "toolbox stderr:\n{}\n", self.stderr.as_str())
+        }
+    }
+}
+
 impl TestRepo {
     pub fn make() -> anyhow::Result<TestRepo> {
+        // TODO: tempdir is a poor choice:
+        //
+        //   * created directories do not clearly map to test cases, so
+        //     debugging is hard
+        //   * capturing the tempdir at the end of the test requires
+        //     hooking into the TestRepo dtor to cp -r its contents out
+        //
+        // The only thing it does well is clean up after itself.
         let dir = tempfile::tempdir()?;
 
         Command::new("git")
@@ -18,24 +53,21 @@ impl TestRepo {
             .arg("--initial-branch")
             .arg("main")
             .current_dir(dir.path())
-            .spawn()?
-            .wait()?;
+            .output()?;
 
         Command::new("git")
             .arg("config")
             .arg("user.name")
             .arg("horton integration test")
             .current_dir(dir.path())
-            .spawn()?
-            .wait()?;
+            .output()?;
 
         Command::new("git")
             .arg("config")
             .arg("user.email")
             .arg("horton@whoville.trunk.io")
             .current_dir(dir.path())
-            .spawn()?
-            .wait()?;
+            .output()?;
 
         Command::new("git")
             .arg("commit")
@@ -43,8 +75,7 @@ impl TestRepo {
             .arg("Initial commit")
             .arg("--allow-empty")
             .current_dir(dir.path())
-            .spawn()?
-            .wait()?;
+            .output()?;
 
         Ok(TestRepo { dir })
     }
@@ -55,6 +86,7 @@ impl TestRepo {
             path.push(relpath);
             path
         };
+
         Ok(fs::write(&path, data).expect(format!("Unable to write {:#?}", path).as_str()))
     }
 
@@ -63,22 +95,51 @@ impl TestRepo {
             .arg("add")
             .arg(".")
             .current_dir(self.dir.path())
-            .spawn()?
-            .wait()?;
+            .output()?;
 
         Ok(())
     }
 
-    pub fn run_horton(&self) -> Result<String, Box<dyn Error>> {
+    pub fn git_commit_all(&self, message: &str) -> anyhow::Result<()> {
+        self.git_add_all()?;
+
+        Command::new("git")
+            .arg("commit")
+            .arg("-m")
+            .arg(message)
+            .current_dir(self.dir.path())
+            .output()?;
+
+        Ok(())
+    }
+
+    pub fn run_horton(&self) -> anyhow::Result<HortonOutput> {
+        self.run_horton_against("HEAD")
+    }
+
+    pub fn run_horton_against(&self, upstream_ref: &str) -> anyhow::Result<HortonOutput> {
         let mut cmd = Command::cargo_bin("trunk-toolbox")?;
 
         cmd.env("RUST_LOG", "debug");
         cmd.arg("--upstream")
-            .arg("HEAD")
+            .arg(upstream_ref)
             .current_dir(self.dir.path());
 
         let output = cmd.output()?;
 
-        return Ok(String::from_utf8(output.stdout)?);
+        return Ok(HortonOutput {
+            stdout: String::from_utf8(output.stdout)?,
+            stderr: String::from_utf8(output.stderr)?,
+            exit_code: output.status.code(),
+        });
+    }
+}
+
+impl Drop for TestRepo {
+    fn drop(&mut self) {
+        log::info!(
+            "TestRepo will clean up after itself: {:#?}",
+            self.dir.path()
+        );
     }
 }

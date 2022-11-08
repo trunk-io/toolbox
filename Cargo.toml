@@ -30,6 +30,7 @@ content_inspector = "0.2.4"
 assert_cmd = "2.0"
 function_name = "0.2.0"
 predicates = "2.1"
+spectral = "0.6.0"
 tempfile = "3.3.0"
 
 [profile.release]

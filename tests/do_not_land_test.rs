@@ -1,39 +1,33 @@
-use predicates::prelude::*; // Used for writing assertions
+use spectral::prelude::*;
 
 mod integration_testing;
 use integration_testing::TestRepo;
 
 #[test]
-fn do_not_land() {
-    let test_repo = TestRepo::make().unwrap();
+fn basic() -> anyhow::Result<()> {
+    let test_repo = TestRepo::make()?;
 
-    test_repo
-        .write(
-            "alpha.foo",
-            "lorem ipsum dolor\ndo-NOT-lAnD\nsit amet\n".as_bytes(),
-        )
-        .unwrap();
-    test_repo.git_add_all().unwrap();
-    let horton = test_repo.run_horton().unwrap();
+    test_repo.write(
+        "alpha.foo",
+        "lorem ipsum dolor\ndo-NOT-lAnD\nsit amet\n".as_bytes(),
+    )?;
+    test_repo.git_add_all()?;
+    let horton = test_repo.run_horton()?;
 
-    // TODO(sam): the stdlib assertion framework is useless. look into fluent assertions for rust.
-    // maybe spectral or google/assertor?
-    assert_eq!(
-        true,
-        predicates::str::contains("Found 'do-NOT-lAnD'").eval(&horton)
-    );
+    assert_that(&horton.exit_code).contains_value(0);
+    assert_that(&horton.stdout).contains("Found 'do-NOT-lAnD'");
+
+    Ok(())
 }
 
 #[test]
-fn do_not_land_ignores_binary_files() {
-    let test_repo = TestRepo::make().unwrap();
+fn binary_files_ignored() -> anyhow::Result<()> {
+    let test_repo = TestRepo::make()?;
 
-    test_repo
-        .write("alpha.foo.binary", include_bytes!("trunk-logo.png"))
-        .unwrap();
-    test_repo.git_add_all().unwrap();
-    let horton = test_repo.run_horton().unwrap();
-    let result: serde_json::Value = serde_json::from_str(&horton).unwrap();
+    test_repo.write("alpha.foo.binary", include_bytes!("trunk-logo.png"))?;
+    test_repo.git_add_all()?;
+    let horton = test_repo.run_horton()?;
+    let result: serde_json::Value = serde_json::from_str(&horton.stdout)?;
     let runs = result
         .as_object()
         .unwrap()
@@ -53,4 +47,6 @@ fn do_not_land_ignores_binary_files() {
             .is_empty(),
         true
     );
+
+    Ok(())
 }
