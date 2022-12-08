@@ -37,14 +37,14 @@ pub fn ictc(hunks: &Vec<Hunk>) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     let modified_lines_by_path = modified_lines_by_path;
 
     let mut blocks: Vec<IctcBlock> = Vec::new();
-    for h in hunks {
+    for path in modified_lines_by_path.keys() {
         let mut ifttt_begin: i64 = -1;
 
-        let in_file =
-            File::open(&h.path).with_context(|| format!("failed to open: {:#?}", h.path))?;
+        let in_file = File::open(&path).with_context(|| format!("failed to open: {:#?}", path))?;
         let in_buf = BufReader::new(in_file);
+
         for (i, line) in lines_view(in_buf)
-            .context(format!("failed to read lines of text from: {:#?}", h.path))?
+            .context(format!("failed to read lines of text from: {:#?}", path))?
             .iter()
             .enumerate()
             .map(|(i, line)| (i + 1, line))
@@ -54,7 +54,7 @@ pub fn ictc(hunks: &Vec<Hunk>) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
             } else if let Some(end) = RE_END.captures(line) {
                 if ifttt_begin != -1 {
                     let block = IctcBlock {
-                        path: h.path.clone(),
+                        path: path.clone(),
                         begin: ifttt_begin,
                         end: i as i64,
                         thenchange: PathBuf::from(end.get(2).unwrap().as_str()),
