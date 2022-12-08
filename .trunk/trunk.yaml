@@ -2,25 +2,17 @@ version: 0.1
 plugins:
   sources:
     - id: trunk
-      ref: v0.0.5
+      ref: v0.0.6
       uri: https://github.com/trunk-io/plugins
-actions:
-  enabled:
-    - trunk-announce
-    - trunk-check-pre-push
-    - trunk-fmt-pre-commit
-    - trunk-cache-prune
-    - trunk-share
-    - trunk-upgrade-available
 runtimes:
   enabled:
     - go@1.18.3
     - node@16.14.2
 cli:
-  version: 0.18.1-beta.6
+  version: 1.1.0
   sha256:
-    darwin_x86_64: ff8e16137d3e40495aba281f392af23cd74c4d5ff58fc756e632fe7e025d961d
-    linux_x86_64: ecce9bbf9a8be60175fc367eeddcc6f3eccab122d84b0272ad1d91f8e6c7c770
+    darwin_x86_64: 4a1d71e39db4948a382f891d69a4e32675a811c5f25d06328c4922abac377250
+    linux_x86_64: b08c7fe2f2b91151873c43590896ef0433dd7a219f76805ce421d6fe7b1643d4
 lint:
   linters:
     - name: horton
@@ -30,10 +22,15 @@ lint:
       success_codes: [0, 1]
   enabled:
     - git-diff-check
-    - taplo@release-taplo-cli-0.7.0
-    - actionlint@1.6.21
-    - clippy@1.64.0
-    - gitleaks@8.15.0
+    - taplo@0.7.0
+    - actionlint@1.6.22
+    - clippy@1.65.0
+    - gitleaks@8.15.2
     - markdownlint@0.32.2
-    - prettier@2.7.1
-    - rustfmt@1.64.0
+    - prettier@2.8.1
+    - rustfmt@1.65.0
+actions:
+  enabled:
+    - trunk-announce
+    - trunk-check-pre-push
+    - trunk-fmt-pre-commit
