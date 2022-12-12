@@ -14,14 +14,7 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            # NOTE(sam): target ubuntu 14 for maximum backwards glibc compatibility, since it's
-            # listed on https://hub.docker.com/_/ubuntu as a supported tag. If this ever takes
-            # more than 10 min to fix an issue, we should just try to use ubuntu-18.04 (or whatever
-            # the oldest Linux image that GH Actions supports is, see
-            # https://github.com/actions/runner-images#available-images).
-            runs-on: ubuntu-latest
-            container: ubuntu:14.04
-            setup: apt-get install curl --yes
+            runs-on: ubuntu-18.04
           - target: x86_64-unknown-linux-musl
             runs-on: ubuntu-latest
           - target: x86_64-apple-darwin
@@ -32,9 +25,6 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-      - name: Setup
-        run: ${{ matrix.setup }}
-
       - uses: actions/checkout@v3
 
       - uses: dtolnay/rust-toolchain@stable
