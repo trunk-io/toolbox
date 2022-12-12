@@ -15,10 +15,6 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             runs-on: ubuntu-18.04
-          - target: x86_64-unknown-linux-musl
-            runs-on: ubuntu-latest
-            container: ubuntu:latest
-            setup: apt install curl musl-tools
           - target: x86_64-apple-darwin
             runs-on: macos-latest
           - target: aarch64-apple-darwin
@@ -27,10 +23,6 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-      - name: Setup
-        if: ${{ matrix.setup }}
-        run: ${{ matrix.setup }}
-
       - uses: actions/checkout@v3
 
       - uses: dtolnay/rust-toolchain@stable
