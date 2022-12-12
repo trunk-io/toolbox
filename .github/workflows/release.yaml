@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install prereqs
-        if: matrix.container == "ubuntu:16.04"
+        if: matrix.container == 'ubuntu:16.04'
         run: apt search curl; apt install curl
 
       - uses: dtolnay/rust-toolchain@stable
