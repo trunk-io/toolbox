@@ -21,6 +21,8 @@ jobs:
           - target: aarch64-apple-darwin
             runs-on: macos-latest
     runs-on: ${{ matrix.runs-on }}
+    container: ${{ matrix.container }}
+
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
