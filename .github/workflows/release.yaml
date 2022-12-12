@@ -17,14 +17,18 @@ jobs:
             runs-on: ubuntu-18.04
           - target: x86_64-unknown-linux-musl
             runs-on: ubuntu-latest
+            setup: apt install musl-tools
           - target: x86_64-apple-darwin
             runs-on: macos-latest
           - target: aarch64-apple-darwin
             runs-on: macos-latest
     runs-on: ${{ matrix.runs-on }}
-    container: ${{ matrix.container }}
 
     steps:
+      - name: Setup
+        if: ${{ matrix.setup }}
+        run: ${{ matrix.setup }}
+
       - uses: actions/checkout@v3
 
       - uses: dtolnay/rust-toolchain@stable
