@@ -29,9 +29,6 @@ jobs:
       - name: Set up toolchains
         run: rustup target add ${{ matrix.target }}
 
-      - name: Dump glibc version
-        run: ldd --version
-
       - name: Build --release
         run: cargo build --release --target ${{ matrix.target }}
         env:
