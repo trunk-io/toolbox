@@ -9,10 +9,9 @@ runtimes:
     - go@1.18.3
     - node@16.14.2
 cli:
-  version: 1.1.0
-  sha256:
-    darwin_x86_64: 4a1d71e39db4948a382f891d69a4e32675a811c5f25d06328c4922abac377250
-    linux_x86_64: b08c7fe2f2b91151873c43590896ef0433dd7a219f76805ce421d6fe7b1643d4
+  version: 1.10.1-beta.25
+api:
+  address: api.trunk-staging.io:8443
 lint:
   linters:
     - name: horton
