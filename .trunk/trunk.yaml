@@ -9,10 +9,11 @@ runtimes:
     - go@1.18.3
     - node@16.14.2
 cli:
-  version: 1.1.0
+  version: 1.10.0
   sha256:
-    darwin_x86_64: 4a1d71e39db4948a382f891d69a4e32675a811c5f25d06328c4922abac377250
-    linux_x86_64: b08c7fe2f2b91151873c43590896ef0433dd7a219f76805ce421d6fe7b1643d4
+    darwin_arm64: e1705c1d47b79261549fa33270400e1402cb0c5ec1bae769c9ffda1ed697821d
+    darwin_x86_64: 4c8acfaa6465afc1bfa5168cb1175b5e7fdd387a7bd4e4c37205e2449ecba6c7
+    linux_x86_64: 0464e044076a2ba2357cfb6c23595efd489dbdef7ca35a2744af87a944efc63a
 lint:
   linters:
     - name: horton
