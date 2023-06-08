@@ -9,11 +9,11 @@ runtimes:
     - go@1.18.3
     - node@16.14.2
 cli:
-  version: 1.10.0
+  version: 1.10.1-beta.25
   sha256:
-    darwin_arm64: e1705c1d47b79261549fa33270400e1402cb0c5ec1bae769c9ffda1ed697821d
-    darwin_x86_64: 4c8acfaa6465afc1bfa5168cb1175b5e7fdd387a7bd4e4c37205e2449ecba6c7
-    linux_x86_64: 0464e044076a2ba2357cfb6c23595efd489dbdef7ca35a2744af87a944efc63a
+    linux_x86_64: 8045a81ad6828381c5bf47fe1b6eb785c5b1a6e54bf9ce7bf5cf1e08e39d62e2
+    darwin_x86_64: 299cae40e4fbaf1ed5751b899a2e40e24fff95d9dca9047573d9cec82b9d71cd
+    darwin_arm64: 09478fa09b77150b77bf897527f3e2dc176c9af934fa8ce7deac9873baa70993
 api:
   address: api.trunk-staging.io:8443
 lint:
