@@ -32,11 +32,11 @@ jobs:
         run: |
           rustup target add ${{ matrix.target }}
           if [[ ${{ matrix.target }} == "aarch64-unknown-linux-gnu" ]]; then
-            sudo apt install -y clang llvm lld;
+            sudo apt install -y binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu;
           fi
 
       - name: Build --release
-        run: CC_aarch64_unknown_linux_gnu="clang -target aarch64-unknown-linux-gnu" cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
         env:
           HORTON_RELEASE: ${{ github.event.inputs.release_tag }}
 
