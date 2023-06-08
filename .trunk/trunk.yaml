@@ -14,6 +14,8 @@ cli:
     darwin_arm64: e1705c1d47b79261549fa33270400e1402cb0c5ec1bae769c9ffda1ed697821d
     darwin_x86_64: 4c8acfaa6465afc1bfa5168cb1175b5e7fdd387a7bd4e4c37205e2449ecba6c7
     linux_x86_64: 0464e044076a2ba2357cfb6c23595efd489dbdef7ca35a2744af87a944efc63a
+api:
+  address: api.trunk-staging.io:8443
 lint:
   linters:
     - name: horton
