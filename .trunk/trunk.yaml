@@ -2,12 +2,12 @@ version: 0.1
 plugins:
   sources:
     - id: trunk
-      ref: v0.0.6
+      ref: v1.2.5
       uri: https://github.com/trunk-io/plugins
 runtimes:
   enabled:
-    - go@1.18.3
-    - node@16.14.2
+    - go@1.21.0
+    - node@18.12.1
 cli:
   version: 1.10.1-beta.25
 api:
