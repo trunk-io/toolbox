@@ -1,0 +1,20 @@
+name: Upgrade trunk
+on:
+  schedule:
+    - cron: 0 8 * * 1-5
+  workflow_dispatch: {}
+permissions: read-all
+jobs:
+  trunk_upgrade:
+    name: Upgrade Trunk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Trunk Upgrade
+        uses: trunk-io/trunk-action/upgrade@v1
+        with:
+          reviewers: pat-trunk-io
