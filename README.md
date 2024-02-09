@@ -60,6 +60,8 @@ enum Flavor {
     Chocholate
 }
 // ThenChange srcs/robot/picker.rs
+
+x += 9; // why not
 ```
 
 // This rule will report a violation if picker.rs is not updated when the content inside this enum block is modified
