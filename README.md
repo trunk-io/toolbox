@@ -51,7 +51,7 @@ If code has baked in assumptions that are not enforced thru a check - then they 
 
 Example
 
-```
+```rust
 // IfChange
 enum Flavor {
 Strawberry,
