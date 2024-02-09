@@ -31,13 +31,13 @@ trunk check enable trunk-toolbox
 
 #### DONOTLAND
 
-What it does
+**What it does**<br>
 Keeps you from accidentally commiting code to a repository that is experimental, temporary, debugging cruft. Keeps your from pushing a PR with a bunch of printf() statements you added while debugging an error.
 
-Why is this bad
+**Why if this bad?**<br>
 Anything you intentionally don't want in your repo should really not be there. This lets you flag code you are writing to do testing without worrying that you'll forget you dropped it in your files before pushing your Pull Request.
 
-Example
+**Example**
 
 ```typescript
 // DONOTLAND
@@ -46,13 +46,13 @@ console.log("I don't think this code should execute but if I see this statement 
 
 #### IfChange (ThenChange)
 
-What it does
+**What it does**<br>
 Allows you to enforce code synchronization. Often we have code in one file that is reliant on code in another loosely - say an enum has 4 options and you want to make sure consumers of that enum are kept in sync as new enums are added. This rule will make sure code is updated in both places when a modication occurs to the code block.
 
-Why is this bad
+**Why if this bad?**<br>
 If code has baked in assumptions that are not enforced thru a check - then they can easily get out of sync. This rule allows you to encode that depedency and ensure all code points are updated when a modification occurs.
 
-Example
+**Example**
 
 ```rust
 let x = 7;
