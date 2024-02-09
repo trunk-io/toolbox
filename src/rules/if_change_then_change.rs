@@ -70,7 +70,7 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
 
 pub fn ictc(
     files: &HashSet<PathBuf>,
-    upstream: &String,
+    upstream: &str,
 ) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     // Build up list of files that actually have a ifchange block - this way we can avoid
     // processing git modified chunks if none are present

@@ -1,3 +1,4 @@
+<!-- trunk-ignore-all(trunk-toolbox) -->
 <!-- trunk-ignore(markdownlint/MD041) -->
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=Trunk.io">
