@@ -52,6 +52,8 @@ If code has baked in assumptions that are not enforced thru a check - then they 
 Example
 
 ```rust
+let x = 7;
+
 // IfChange
 enum Flavor {
     Strawberry,
