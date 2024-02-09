@@ -30,7 +30,7 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
 
     let mut ifttt_begin: i64 = -1;
 
-    let in_file = File::open(&path).with_context(|| format!("failed to open: {:#?}", path))?;
+    let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;
     let in_buf = BufReader::new(in_file);
 
     for (i, line) in lines_view(in_buf)
