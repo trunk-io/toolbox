@@ -18,7 +18,6 @@ pub fn is_binary_file(path: &PathBuf) -> std::io::Result<bool> {
     let mut file = File::open(path)?;
     let mut buffer = [0; 4096];
     let n = file.read(&mut buffer)?;
-    // eprintln!("PNL:{}", buffer[..n]);
     Ok(buffer[..n].contains(&0))
 }
 
