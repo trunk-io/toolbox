@@ -54,8 +54,8 @@ Example
 ```rust
 // IfChange
 enum Flavor {
-Strawberry,
-Chocholate
+    Strawberry,
+    Chocholate
 }
 // ThenChange srcs/robot/picker.rs
 ```
