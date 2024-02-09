@@ -1,3 +1,4 @@
+// trunk-ignore-all(trunk-toolbox/do-not-land)
 use spectral::prelude::*;
 
 mod integration_testing;
