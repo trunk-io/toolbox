@@ -22,8 +22,7 @@
 Toolbox is our custom collection of must have tools for any large software project. We've got a backlog of small tools to built into our toolbox here and happy to take contributions as well. `toolbox` is best used through `trunk check` to keep your development on rails (not the ruby kind).
 
 This repo is open to contributions! See our
-[contribution guidelines](https://github.com/trunk-io/toolbox/blob/main/CONTRIBUTING.md) and join
-our [slack community][slack] for help.
+[contribution guidelines](https://github.com/trunk-io/toolbox/blob/main/CONTRIBUTING.md)
 
 ### Enabling
 
