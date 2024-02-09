@@ -60,6 +60,8 @@ If code has baked in assumptions that are not enforced thru a check - then they 
 
 ##### Example
 
+This rule will report a violation if picker.rs is not updated when the content inside this enum block is modified:
+
 ```rust
 let x = 7;
 
@@ -72,8 +74,6 @@ enum Flavor {
 
 x += 9; // why not
 ```
-
-// This rule will report a violation if picker.rs is not updated when the content inside this enum block is modified
 
 ### Disclaimer
 
