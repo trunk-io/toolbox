@@ -38,8 +38,11 @@ Why is this bad
 Anything you intentionally don't want in your repo should really not be there. This lets you flag code you are writing to do testing without worrying that you'll forget you dropped it in your files before pushing your Pull Request.
 
 Example
+
+```typescript
 // DONOTLAND
 console.log("I don't think this code should execute but if I see this statement in the logs...it has.);
+```
 
 #### IfChange (ThenChange)
 
