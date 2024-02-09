@@ -31,7 +31,7 @@ trunk check enable trunk-toolbox
 
 ### Rules
 
-#### DONOTLAND
+#### do-not-land
 
 ##### What it does
 
@@ -48,7 +48,7 @@ Anything you intentionally don't want in your repo should really not be there. T
 console.log("I don't think this code should execute but if I see this statement in the logs...it has.);
 ```
 
-#### IfChange (ThenChange)
+#### if-change-then-change
 
 ##### What it does
 
