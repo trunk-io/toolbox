@@ -37,6 +37,8 @@ trunk check enable trunk-toolbox
 
 Keeps you from accidentally commiting code to a repository that is experimental, temporary, debugging cruft. Keeps your from pushing a PR with a bunch of printf() statements you added while debugging an error.
 
+Valid triggers for this rule are: DONOTLAND, DO-NOT-LAND, DO_NOT_LAND, donotland, do-not-land, do_not_land
+
 ##### Why if this bad?
 
 Anything you intentionally don't want in your repo should really not be there. This lets you flag code you are writing to do testing without worrying that you'll forget you dropped it in your files before pushing your Pull Request.
