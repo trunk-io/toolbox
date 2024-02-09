@@ -4,7 +4,7 @@ Thanks for contributing to the trunk toolbox! Read on to learn more.
 
 - [Overview](#overview)
 - [Development](#development)
-- [Testing](#teesting)
+- [Testing](#testing)
 - [Guidelines](#guidelines)
 - [Docs](https://docs.trunk.io)
 
