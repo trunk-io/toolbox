@@ -1,3 +1,4 @@
+// trunk-ignore-all(trunk-toolbox/do-not-land)
 extern crate regex;
 
 use crate::diagnostic;
