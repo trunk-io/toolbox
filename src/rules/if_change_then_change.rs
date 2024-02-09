@@ -58,16 +58,6 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
     Ok(blocks)
 }
 
-// let block_lines = HashSet::from_iter(block.begin..block.end);
-
-// if !block_lines.is_disjoint(
-//     modified_lines_by_path
-//         .get(&block.path)
-//         .unwrap_or(&HashSet::new()),
-// ) {
-//     blocks.push(block);
-// }
-
 pub fn ictc(
     files: &HashSet<PathBuf>,
     upstream: &str,

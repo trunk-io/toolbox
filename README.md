@@ -29,7 +29,7 @@ trunk check enable trunk-toolbox
 
 ### Rules
 
-## DONOTLAND
+#### DONOTLAND
 
 What it does
 Keeps you from accidentally commiting code to a repository that is experimental, temporary, debugging cruft. Keeps your from pushing a PR with a bunch of printf() statements you added while debugging an error.
@@ -41,7 +41,7 @@ Example
 // DONOTLAND
 console.log("I don't think this code should execute but if I see this statement in the logs...it has.);
 
-## IfChange (ThenChange)
+#### IfChange (ThenChange)
 
 What it does
 Allows you to enforce code synchronization. Often we have code in one file that is reliant on code in another loosely - say an enum has 4 options and you want to make sure consumers of that enum are kept in sync as new enums are added. This rule will make sure code is updated in both places when a modication occurs to the code block.
@@ -51,12 +51,14 @@ If code has baked in assumptions that are not enforced thru a check - then they 
 
 Example
 
+```
 // IfChange
 enum Flavor {
 Strawberry,
 Chocholate
 }
 // ThenChange srcs/robot/picker.rs
+```
 
 // This rule will report a violation if picker.rs is not updated when the content inside this enum block is modified
 
