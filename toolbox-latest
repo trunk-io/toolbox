@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Define the paths
+release_path="./target/release/trunk-toolbox"
+debug_path="./target/debug/trunk-toolbox"
+fallback_path="trunk-toolbox"
+
+# Check if the release and debug files exist
+if [[ -e $release_path && -e $debug_path ]]; then
+    # If both files exist, check which one is more recent
+    if [[ $release_path -nt $debug_path ]]; then
+        # If the release file is more recent, execute it
+        echo "Executing $release_path"
+        $release_path "$@"
+        exit $?
+    else
+        # If the debug file is more recent, execute it
+        echo "Executing $debug_path"
+        $debug_path "$@"
+        exit $?
+    fi
+elif [[ -e $release_path ]]; then
+    # If only the release file exists, execute it
+    echo "Executing $release_path"
+    $release_path "$@"
+    exit $?
+elif [[ -e $debug_path ]]; then
+    # If only the debug file exists, execute it
+    echo "Executing $debug_path"
+    $debug_path "$@"
+    exit $?
+else
+    # If neither file exists, execute the fallback path
+    echo "Executing $fallback_path"
+    $fallback_path "$@"
+    exit $?
+fi

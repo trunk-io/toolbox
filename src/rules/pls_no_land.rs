@@ -2,9 +2,11 @@ extern crate regex;
 
 use crate::diagnostic;
 use anyhow::Context;
+use rayon::prelude::*;
 use regex::Regex;
 use std::collections::HashSet;
 use std::fs::File;
+use std::io::Read;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
@@ -12,20 +14,33 @@ lazy_static::lazy_static! {
     static ref RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
 }
 
+pub fn is_binary_file(path: &PathBuf) -> std::io::Result<bool> {
+    let mut file = File::open(path)?;
+    let mut buffer = [0; 4096];
+    let n = file.read(&mut buffer)?;
+    // eprintln!("PNL:{}", buffer[..n]);
+    Ok(buffer[..n].contains(&0))
+}
+
 // Checks for $re and other forms thereof in source code
 //
-// Note that this is named "pls_no_land" to avoid causing DNL matches everywhere in horton.
+// Note that this is named "pls_no_land" to avoid causing DNL matches everywhere in trunk-toolbox.
 pub fn pls_no_land(paths: &HashSet<PathBuf>) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
-    let mut ret = Vec::new();
+    // Scan files in parallel
+    let results: Result<Vec<_>, _> = paths.par_iter().map(pls_no_land_impl).collect();
 
-    for path in paths {
-        ret.splice(0..0, pls_no_land_impl(path)?);
+    match results {
+        Ok(v) => Ok(v.into_iter().flatten().collect()),
+        Err(e) => Err(e),
     }
-
-    Ok(ret)
 }
 
 fn pls_no_land_impl(path: &PathBuf) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+    if is_binary_file(path).unwrap_or(true) {
+        log::debug!("Ignoring binary file {}", path.display());
+        return Ok(vec![]);
+    }
+
     let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;
     let mut in_buf = BufReader::new(in_file);
 

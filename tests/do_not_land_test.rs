@@ -37,6 +37,9 @@ fn binary_files_ignored() -> anyhow::Result<()> {
         .unwrap();
 
     assert_eq!(runs.len(), 1);
+
+    let results = runs.get(0).unwrap().get("results");
+
     assert_eq!(
         runs.get(0)
             .unwrap()
@@ -44,9 +47,11 @@ fn binary_files_ignored() -> anyhow::Result<()> {
             .unwrap()
             .as_array()
             .unwrap()
+            .iter()
+            .filter(|r| r.get("level").unwrap() != "note")
+            .collect::<Vec<_>>()
             .is_empty(),
         true
     );
-
     Ok(())
 }

@@ -1,5 +1,6 @@
 use assert_cmd::prelude::*;
 
+use horton::git::modified_since;
 use std::fmt;
 use std::fs;
 use std::process::Command;
@@ -120,10 +121,23 @@ impl TestRepo {
     pub fn run_horton_against(&self, upstream_ref: &str) -> anyhow::Result<HortonOutput> {
         let mut cmd = Command::cargo_bin("trunk-toolbox")?;
 
+        let modified_paths =
+            horton::git::modified_since(upstream_ref, Some(self.dir.path()))?.paths;
+        let strings: Result<Vec<String>, _> = modified_paths
+            .into_iter()
+            .map(|path| path.into_os_string().into_string())
+            .collect();
+
         cmd.env("RUST_LOG", "debug");
         cmd.arg("--upstream")
             .arg(upstream_ref)
             .current_dir(self.dir.path());
+        for path in strings.unwrap() {
+            cmd.arg(path);
+        }
+        let cmd_str = format!("{:?}", cmd);
+
+        // eprintln!("Command: {}", cmd_str);
 
         let output = cmd.output()?;
 
