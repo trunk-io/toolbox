@@ -1,6 +1,5 @@
 use assert_cmd::prelude::*;
 
-use horton::git::modified_since;
 use std::fmt;
 use std::fs;
 use std::process::Command;
@@ -135,9 +134,8 @@ impl TestRepo {
         for path in strings.unwrap() {
             cmd.arg(path);
         }
-        let cmd_str = format!("{:?}", cmd);
 
-        // eprintln!("Command: {}", cmd_str);
+        log::debug!("Command: {}", format!("{:?}", cmd));
 
         let output = cmd.output()?;
 

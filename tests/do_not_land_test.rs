@@ -39,8 +39,6 @@ fn binary_files_ignored() -> anyhow::Result<()> {
 
     assert_eq!(runs.len(), 1);
 
-    let results = runs.get(0).unwrap().get("results");
-
     assert_eq!(
         runs.get(0)
             .unwrap()
