@@ -31,5 +31,8 @@ jobs:
           path: ~/.cache/trunk
           key: trunk-${{ runner.os }}
 
+      - name: Build trunk-toolbox
+        run: cargo build
+
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1.0.4
