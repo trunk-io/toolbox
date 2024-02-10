@@ -24,8 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Build trunk-toolbox
-        uses: dtolnay/rust-toolchain@stable
         run: cargo build
 
       # Caching is only needed when using ephemeral CI runners
