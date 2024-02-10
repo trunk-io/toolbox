@@ -1,0 +1,13 @@
+name: trunk-io/trunk setup for trunk check/upgrade
+description: Set up
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - uses: dtolnay/rust-toolchain@stable
+
+    - name: Build trunk-toolbox
+      run: cargo build
