@@ -17,8 +17,6 @@
   </a>
 </p>
 
- \textcolor{red}{red}
-
 ### Welcome
 
 Toolbox is our custom collection of must have tools for any large software project. We've got a backlog of small tools to built into our toolbox here and happy to take contributions as well. `toolbox` is best used through `trunk check` to keep your development on rails (not the ruby kind).
@@ -40,13 +38,13 @@ trunk check enable trunk-toolbox
 
 ##### What it does
 
-Keeps you from accidentally commiting code to a repository that is experimental, temporary, debugging cruft. Keeps your from pushing a PR with a bunch of printf() statements you added while debugging an error.
+Keeps you from accidentally commiting code to a repository that is experimental, temporary, debugging cruft. It keeps you from pushing a PR with a bunch of printf() statements you added while debugging an error.
 
 Valid triggers for this rule are: DONOTLAND, DO-NOT-LAND, DO_NOT_LAND, donotland, do-not-land, do_not_land
 
 ##### Why if this bad?
 
-Anything you intentionally don't want in your repo should really not be there. This lets you flag code you are writing to do testing without worrying that you'll forget you dropped it in your files before pushing your Pull Request.
+Anything you intentionally don't want in your repo should really not be there. This lets you flag the code you are writing to do testing without worrying that you'll forget you dropped it in your files before pushing your Pull Request.
 
 ##### Example
 
@@ -57,15 +55,13 @@ console.log("I don't think this code should execute");
 
 #### if-change-then-change
 
-#### $${\color{red}Red}$$
-
 ##### What it does
 
-Allows you to enforce code synchronization. Often we have code in one file that is reliant on code in another loosely - say an enum has 4 options and you want to make sure consumers of that enum are kept in sync as new enums are added. This rule will make sure code is updated in both places when a modication occurs to the code block.
+Allows you to enforce code synchronization. Often, we have code in one file that is reliant on code in another loosely - say an enum has 4 options and you want to make sure consumers of that enum are kept in sync as new enums are added. This rule will make sure the code is updated in both places when a modification occurs to the code block.
 
 ##### Why if this bad?
 
-If code has baked in assumptions that are not enforced thru a check - then they can easily get out of sync. This rule allows you to encode that depedency and ensure all code points are updated when a modification occurs.
+If code has baked-in assumptions that are not enforced through a check - then they can easily get out of sync. This rule allows you to encode that dependency and ensure all related code is updated when a modification occurs.
 
 ##### Example
 
