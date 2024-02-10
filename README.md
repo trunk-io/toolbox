@@ -50,10 +50,12 @@ Anything you intentionally don't want in your repo should really not be there. T
 
 ```typescript
 // DONOTLAND
-console.log("I don't think this code should execute but if I see this statement in the logs...it has.);
+console.log("I don't think this code should execute");
 ```
 
 #### if-change-then-change
+
+#### $${\color{red}Red}$$
 
 ##### What it does
 
