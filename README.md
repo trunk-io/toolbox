@@ -17,6 +17,8 @@
   </a>
 </p>
 
+ \textcolor{red}{red}
+
 ### Welcome
 
 Toolbox is our custom collection of must have tools for any large software project. We've got a backlog of small tools to built into our toolbox here and happy to take contributions as well. `toolbox` is best used through `trunk check` to keep your development on rails (not the ruby kind).
