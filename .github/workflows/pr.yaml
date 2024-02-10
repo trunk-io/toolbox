@@ -24,15 +24,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Build trunk-toolbox
+        uses: dtolnay/rust-toolchain@stable
+        run: cargo build
+
       # Caching is only needed when using ephemeral CI runners
       - name: Cache Linters/Formatters
         uses: actions/cache@v2
         with:
           path: ~/.cache/trunk
           key: trunk-${{ runner.os }}
-
-      - name: Build trunk-toolbox
-        run: cargo build
 
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1.0.4
