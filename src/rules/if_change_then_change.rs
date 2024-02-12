@@ -47,7 +47,11 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
                     path: path.clone(),
                     begin: ifttt_begin,
                     end: i as i64,
-                    thenchange: PathBuf::from(end.get(2).unwrap().as_str()),
+                    thenchange: PathBuf::from(
+                        end.get(2)
+                            .with_context(|| "expected at least 3 captures")?
+                            .as_str(),
+                    ),
                 };
                 blocks.push(block);
                 ifttt_begin = -1;
