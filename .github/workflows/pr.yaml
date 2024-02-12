@@ -21,6 +21,8 @@ jobs:
     runs-on: [self-hosted, ubuntu-x64]
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
         with:

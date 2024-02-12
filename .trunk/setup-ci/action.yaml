@@ -5,10 +5,9 @@ runs:
   using: composite
   steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v2
 
     - uses: dtolnay/rust-toolchain@stable
 
     - name: Build trunk-toolbox
-      shell: bash
       run: cargo build
