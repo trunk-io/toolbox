@@ -1,3 +1,6 @@
+<!-- trunk-ignore-all(trunk-toolbox) -->
+<!-- trunk-ignore-all(markdownlint/MD024) -->
+
 <!-- trunk-ignore(markdownlint/MD041) -->
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=Trunk.io">
@@ -18,7 +21,10 @@
 
 Toolbox is our custom collection of must have tools for any large software project. We've got a backlog of small tools to built into our toolbox here and happy to take contributions as well. `toolbox` is best used through `trunk check` to keep your development on rails (not the ruby kind).
 
-### Rules
+This repo is open to contributions! See our
+[contribution guidelines](https://github.com/trunk-io/toolbox/blob/main/CONTRIBUTING.md)
+
+### Enabling
 
 To enable the toolbox rules in your repository run:
 
@@ -26,9 +32,53 @@ To enable the toolbox rules in your repository run:
 trunk check enable trunk-toolbox
 ```
 
-| rule      | description                                                                                                                                                                                                          |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DONOTLAND | Sometimes you write some code but want to make sure it doesn't actually land. With this rule you can keep yourself from that embarrassing commit that get's pushed for review with hacks or temporary junk inside it |
+### Rules
+
+#### do-not-land
+
+##### What it does
+
+Keeps you from accidentally commiting code to a repository that is experimental, temporary, debugging cruft. It keeps you from pushing a PR with a bunch of printf() statements you added while debugging an error.
+
+Valid triggers for this rule are: DONOTLAND, DO-NOT-LAND, DO_NOT_LAND, donotland, do-not-land, do_not_land
+
+##### Why if this bad?
+
+Anything you intentionally don't want in your repo should really not be there. This lets you flag the code you are writing to do testing without worrying that you'll forget you dropped it in your files before pushing your Pull Request.
+
+##### Example
+
+```typescript
+// DONOTLAND
+console.log("I don't think this code should execute");
+```
+
+#### if-change-then-change
+
+##### What it does
+
+Allows you to enforce code synchronization. Often, we have code in one file that is reliant on code in another loosely - say an enum has 4 options and you want to make sure consumers of that enum are kept in sync as new enums are added. This rule will make sure the code is updated in both places when a modification occurs to the code block.
+
+##### Why if this bad?
+
+If code has baked-in assumptions that are not enforced through a check - then they can easily get out of sync. This rule allows you to encode that dependency and ensure all related code is updated when a modification occurs.
+
+##### Example
+
+This rule will report a violation if picker.rs is not updated when the content inside this enum block is modified:
+
+```rust
+let x = 7;
+
+// IfChange
+enum Flavor {
+    Strawberry,
+    Chocholate
+}
+// ThenChange srcs/robot/picker.rs
+
+x += 9; // why not
+```
 
 ### Disclaimer
 

@@ -34,8 +34,9 @@ fn is_lfs(repo: &Repository, path: &Path) -> bool {
     }
 }
 
-pub fn modified_since(upstream: &str) -> anyhow::Result<NewOrModified> {
-    let repo = Repository::open(".")?;
+pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Result<NewOrModified> {
+    let path = repo_path.unwrap_or(Path::new("."));
+    let repo = Repository::open(path)?;
 
     let upstream_tree = match repo.find_reference(upstream) {
         Ok(reference) => reference.peel_to_tree()?,

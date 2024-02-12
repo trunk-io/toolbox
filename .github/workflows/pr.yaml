@@ -7,10 +7,10 @@ concurrency:
 jobs:
   build_and_test:
     name: Cargo Test [linux]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ubuntu-x64]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Cargo Test
@@ -18,18 +18,12 @@ jobs:
 
   trunk_check_runner:
     name: Trunk Check runner [linux]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ubuntu-x64]
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      # Caching is only needed when using ephemeral CI runners
-      - name: Cache Linters/Formatters
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/trunk
-          key: trunk-${{ runner.os }}
+      - uses: actions/checkout@v4
 
       - name: Trunk Check
-        uses: trunk-io/trunk-action@v1.0.4
+        uses: trunk-io/trunk-action@v1
+        with:
+          cache: false
