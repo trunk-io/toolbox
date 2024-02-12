@@ -26,10 +26,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Build trunk-toolbox
-        run: cargo build
-
       - name: Trunk Check
-        uses: trunk-io/trunk-action@v1.1.10
+        uses: trunk-io/trunk-action@v1
         with:
           cache: false
