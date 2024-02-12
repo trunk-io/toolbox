@@ -10,4 +10,5 @@ runs:
     - uses: dtolnay/rust-toolchain@stable
 
     - name: Build trunk-toolbox
+      shell: bash
       run: cargo build
