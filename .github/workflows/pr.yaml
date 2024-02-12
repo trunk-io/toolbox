@@ -24,8 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - uses: dtolnay/rust-toolchain@stable
-
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1
         with:
