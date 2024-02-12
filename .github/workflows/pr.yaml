@@ -31,3 +31,5 @@ jobs:
 
       - name: Trunk Check
         uses: trunk-io/trunk-action@v1.0.4
+        with:
+          cache: false
