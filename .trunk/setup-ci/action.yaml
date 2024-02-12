@@ -1,0 +1,11 @@
+name: trunk-io/trunk setup for trunk check/upgrade
+description: Set up
+
+runs:
+  using: composite
+  steps:
+    - uses: dtolnay/rust-toolchain@stable
+
+    - name: Build trunk-toolbox
+      shell: bash
+      run: cargo build

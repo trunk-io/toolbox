@@ -9,7 +9,7 @@ fn main() {
         println!("cargo:rustc-env=CARGO_PKG_VERSION={}", val);
     } else {
         let output = Command::new("git")
-            .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+            .args(["rev-parse", "--abbrev-ref", "HEAD"])
             .output()
             .unwrap();
         let git_ref = String::from_utf8(output.stdout).unwrap();
