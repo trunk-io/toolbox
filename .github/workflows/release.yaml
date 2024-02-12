@@ -1,4 +1,4 @@
-name: Release Horton CLI
+name: Release Toolbox
 on:
   workflow_dispatch:
     inputs:
@@ -14,17 +14,17 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            runs-on: ubuntu-20.04
+            runs-on: [self-hosted, Linux]
           - target: aarch64-unknown-linux-gnu
-            runs-on: ubuntu-20.04
+            runs-on: [self-hosted, Linux]
           - target: x86_64-apple-darwin
-            runs-on: macos-latest
+            runs-on: [self-hosted, macOS]
           - target: aarch64-apple-darwin
-            runs-on: macos-latest
+            runs-on: [self-hosted, macOS]
     runs-on: ${{ matrix.runs-on }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -52,7 +52,7 @@ jobs:
     needs: [build]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - id: download
         uses: actions/download-artifact@v3
