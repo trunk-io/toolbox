@@ -30,6 +30,6 @@ jobs:
         run: cargo build
 
       - name: Trunk Check
-        uses: trunk-io/trunk-action@v1.0.4
+        uses: trunk-io/trunk-action@v1.1.10
         with:
           cache: false
