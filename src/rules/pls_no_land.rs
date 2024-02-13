@@ -3,7 +3,7 @@ extern crate regex;
 
 use crate::diagnostic;
 use anyhow::Context;
-use rayon::prelude::*;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use std::collections::HashSet;
 use std::fs::File;
