@@ -6,11 +6,11 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::path::PathBuf;
 
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 
 use crate::diagnostic;
 use crate::git;
-use rayon::prelude::*;
 
 #[derive(Debug)]
 pub enum ThenChange {
