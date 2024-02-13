@@ -59,7 +59,7 @@ lint:
   ignore:
     - linters: [trunk-toolbox]
       paths:
-        - tests/if_change_then_change_test.rs
+        - tests/**
 
   enabled:
     - shellcheck@0.9.0
