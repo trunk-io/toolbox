@@ -17,6 +17,47 @@
       },
       "args": ["--file", "${workspaceFolder}/src/main.rs"],
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests",
+      "cargo": {
+        "args": ["test", "--no-run", "--lib"],
+        "filter": {
+          "name": "verify_find_ictc_blocks",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug toolbox",
+      "cargo": {
+        "args": ["build", "--bin=trunk-toolbox"],
+        "filter": {
+          "name": "trunk-toolbox",
+          "kind": "bin"
+        }
+      },
+      "args": ["tests/if_change_then_change/basic_ictc.file"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in list",
+      "cargo": {
+        "args": ["test", "--", "--list"],
+        "filter": {
+          "name": "verify_find_ictc_blocks"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
