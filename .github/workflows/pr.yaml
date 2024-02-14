@@ -19,9 +19,6 @@ jobs:
       - name: Run tests
         run: cargo test -q -- -Z unstable-options --format json --report-time | cargo2junit >  ${{ github.workspace }}/target/junit.xml
 
-      - name: Cargo Test
-        run: cargo test -q --  -Z unstable-options --format json --report-time | /home/eli/.cargo/bin/cargo2junit > junit_report.xml
-
       - name: Upload results
         # Run this step even if the test step ahead fails
         if: "!cancelled()"

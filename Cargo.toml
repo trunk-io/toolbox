@@ -33,7 +33,6 @@ function_name = "0.2.0"
 predicates = "2.1"
 spectral = "0.6.0"
 tempfile = "3.3.0"
-cargo2junit = "0.1.13"
 
 [profile.release]
 codegen-units = 1
