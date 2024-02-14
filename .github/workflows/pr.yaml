@@ -25,8 +25,8 @@ jobs:
         uses: trunk-io/analytics-uploader@main
         with:
           junit-paths: ${{ github.workspace }}/target/nextest/ci/*junit.xml
-          org-slug: trunk-staging-org
-          token: ${{ secrets.TRUNK_PROD_ORG_API_TOKEN }}
+          org-slug: trunk
+          token: ${{ secrets.TRUNK_API_TOKEN }}
         continue-on-error: true
 
   trunk_check_runner:
