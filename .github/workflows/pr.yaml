@@ -14,7 +14,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
 
       - name: Cargo Test
-        run: cargo test -q --  -Z unstable-options --format json --report-time | /home/eli/.cargo/bin/cargo2junit > junit.xml
+        run: cargo test -q --  -Z unstable-options --format json --report-time | /home/eli/.cargo/bin/cargo2junit > junit_report.xml
 
       - name: Upload results
         # Run this step even if the test step ahead fails
@@ -22,7 +22,7 @@ jobs:
         uses: trunk-io/analytics-uploader@main
         with:
           # Path to your test results.
-          junit-paths: target/path/**/*_test.xml
+          junit-paths: junit_report.xml
           org-slug: trunk-staging-org
           # Provide your Trunk API token as a GitHub secret.
           token: ${{ secrets.TRUNK_API_TOKEN }}
