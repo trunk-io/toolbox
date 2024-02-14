@@ -13,12 +13,13 @@ failure-output = "immediate"
 success-output = "never"
 fail-fast = true
 slow-timeout = { period = "60s" }
-report-name = "nextest-run"
-store-success-output = false
-store-failure-output = true
 
 [profile.ci]
 fail-fast = false
 
 [profile.ci.junit]
 path = "junit.xml"
+
+report-name = "nextest-run"
+store-success-output = false
+store-failure-output = true
