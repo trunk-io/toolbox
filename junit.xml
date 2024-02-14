@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite id="0" name="cargo test #0" package="testsuite/cargo test #0" tests="0" errors="0" failures="0" hostname="localhost" timestamp="2024-02-14T21:01:58.795276521Z" time="0" />
+  <testsuite id="1" name="cargo test #1" package="testsuite/cargo test #1" tests="0" errors="0" failures="0" hostname="localhost" timestamp="2024-02-14T21:01:58.795276521Z" time="0" />
+  <testsuite id="2" name="cargo test #2" package="testsuite/cargo test #2" tests="2" errors="0" failures="0" hostname="localhost" timestamp="2024-02-14T21:01:58.795276521Z" time="0.040596625">
+    <testcase name="binary_files_ignored" time="0.020121712" classname="" />
+    <testcase name="basic" time="0.020474913" classname="" />
+  </testsuite>
+  <testsuite id="3" name="cargo test #3" package="testsuite/cargo test #3" tests="9" errors="0" failures="0" hostname="localhost" timestamp="2024-02-14T21:01:58.795276521Z" time="0.135687853">
+    <testcase name="verify_find_ictc_blocks" time="0.001059909" classname="" />
+    <testcase name="unmodified_block_and_preceding_lines_unchanged" time="0.014376372" classname="" />
+    <testcase name="unmodified_block_and_preceding_line_count_decreased" time="0.015514528" classname="" />
+    <testcase name="unmodified_block_and_preceding_line_count_increased" time="0.016807812" classname="" />
+    <testcase name="modified_block_and_preceding_line_count_increased" time="0.017245458" classname="" />
+    <testcase name="modified_block_and_preceding_line_count_decreased" time="0.017451466" classname="" />
+    <testcase name="modified_block_and_preceding_lines_unchanged" time="0.017316443" classname="" />
+    <testcase name="unmodified_block_and_preceding_line_count_unchanged" time="0.017558665" classname="" />
+    <testcase name="modified_block_and_preceding_line_count_unchanged" time="0.0183572" classname="" />
+  </testsuite>
+  <testsuite id="4" name="cargo test #4" package="testsuite/cargo test #4" tests="0" errors="0" failures="0" hostname="localhost" timestamp="2024-02-14T21:01:58.795276521Z" time="0" />
+  <testsuite id="5" name="cargo test #5" package="testsuite/cargo test #5" tests="4" errors="0" failures="0" hostname="localhost" timestamp="2024-02-14T21:01:58.795276521Z" time="0.051050726">
+    <testcase name="binary_file_untracked" time="0.010058144" classname="" />
+    <testcase name="lfs_file_untracked" time="0.01238887" classname="" />
+    <testcase name="binary_file_committed" time="0.013513588" classname="" />
+    <testcase name="lfs_file_committed" time="0.015090124" classname="" />
+  </testsuite>
+  <testsuite id="6" name="cargo test #6" package="testsuite/cargo test #6" tests="0" errors="0" failures="0" hostname="localhost" timestamp="2024-02-14T21:01:58.795276521Z" time="0" />
+</testsuites>
