@@ -26,7 +26,7 @@ jobs:
         with:
           junit-paths: ${{ github.workspace }}/target/nextest/ci/*junit.xml
           org-slug: trunk
-          token: ${{ secrets.TRUNK_API_TOKEN }}
+          token: ${{ secrets.TRUNK_PROD_ORG_API_TOKEN }}
         continue-on-error: true
 
   trunk_check_runner:
