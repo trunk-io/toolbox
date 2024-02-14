@@ -19,7 +19,7 @@ jobs:
       - name: Run tests
         run: cargo nextest run --profile=ci
 
-      - name: Upload results
+      - name: Upload test results
         # Run this step even if the test step ahead fails
         if: "!cancelled()"
         uses: trunk-io/analytics-uploader@main
