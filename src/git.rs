@@ -27,7 +27,7 @@ fn is_lfs(repo: &Repository, path: &Path) -> bool {
     // FILE_THEN_INDEX checks working tree then index; mimics git itself
     // https://github.com/libgit2/libgit2/blob/v1.5.0/include/git2/attr.h#L104-L116
     if let Ok(filter_bytes) = repo.get_attr_bytes(path, "filter", AttrCheckFlags::FILE_THEN_INDEX) {
-        let filter = AttrValue::from_bytes(filter_bytes);
+        let filter: AttrValue<'_> = AttrValue::from_bytes(filter_bytes);
         filter.eq(&AttrValue::from_string(Some("lfs")))
     } else {
         false

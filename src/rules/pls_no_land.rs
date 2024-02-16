@@ -2,10 +2,10 @@
 extern crate regex;
 
 use crate::diagnostic;
+use crate::run::Run;
 use anyhow::Context;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
 use std::io::{BufRead, BufReader};
@@ -25,9 +25,14 @@ pub fn is_binary_file(path: &PathBuf) -> std::io::Result<bool> {
 // Checks for $re and other forms thereof in source code
 //
 // Note that this is named "pls_no_land" to avoid causing DNL matches everywhere in trunk-toolbox.
-pub fn pls_no_land(paths: &HashSet<PathBuf>) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+    let config = &run.config.plsnoland;
+    if !config.enabled {
+        return Ok(vec![]);
+    }
+
     // Scan files in parallel
-    let results: Result<Vec<_>, _> = paths.par_iter().map(pls_no_land_impl).collect();
+    let results: Result<Vec<_>, _> = run.paths.par_iter().map(pls_no_land_impl).collect();
 
     match results {
         Ok(v) => Ok(v.into_iter().flatten().collect()),

@@ -274,6 +274,37 @@ trailing lines
 }
 
 #[test]
+fn honor_disabled_in_config() {
+    let revisions = [
+        r#"
+initial
+preceding
+lines
+// IfChange
+delta = "initial value"
+// ThenChange constant.foo
+and then
+trailing lines
+"#,
+        r#"
+now
+there
+are
+more
+preceding
+lines
+// IfChange
+delta = "new value"
+// ThenChange constant.foo
+and then
+trailing lines
+"#,
+    ];
+
+    assert_expected_change_in_constant_foo(revisions)
+}
+
+#[test]
 fn verify_find_ictc_blocks() {
     let result = find_ictc_blocks(&PathBuf::from(
         "tests/if_change_then_change/basic_ictc.file",

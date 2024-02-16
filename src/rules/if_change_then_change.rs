@@ -1,3 +1,4 @@
+use crate::run::Run;
 use anyhow::Context;
 use log::debug;
 use std::collections::{HashMap, HashSet};
@@ -62,13 +63,17 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
     Ok(blocks)
 }
 
-pub fn ictc(
-    files: &HashSet<PathBuf>,
-    upstream: &str,
-) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+    let config = &run.config.ifchange;
+
+    if !config.enabled {
+        return Ok(vec![]);
+    }
+
     // Build up list of files that actually have a ifchange block - this way we can avoid
     // processing git modified chunks if none are present
-    let all_blocks: Vec<_> = files
+    let all_blocks: Vec<_> = run
+        .paths
         .par_iter()
         .filter_map(|file| find_ictc_blocks(file).ok())
         .flatten()

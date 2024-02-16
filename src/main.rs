@@ -1,9 +1,12 @@
 use clap::Parser;
+use confique::Config;
+use horton::config::Conf;
 use horton::diagnostic;
 use horton::rules::if_change_then_change::ictc;
 use horton::rules::pls_no_land::pls_no_land;
+use horton::run::Run;
+
 use serde_sarif::sarif;
-use std::collections::HashSet;
 use std::path::PathBuf;
 use std::time::Instant;
 #[derive(Parser, Debug)]
@@ -27,11 +30,19 @@ fn run() -> anyhow::Result<()> {
 
     let mut ret = diagnostic::Diagnostics::default();
 
-    // Convert to PathBufs
-    let paths: HashSet<PathBuf> = opts.files.into_iter().map(PathBuf::from).collect();
+    let config = Conf::builder()
+        .env()
+        .file("toolbox.toml")
+        .file(".config/toolbox.toml")
+        .load()?;
+
+    let run: Run = Run {
+        paths: opts.files.into_iter().map(PathBuf::from).collect(),
+        config,
+    };
 
     let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
-        rayon::join(|| pls_no_land(&paths), || ictc(&paths, &opts.upstream));
+        rayon::join(|| pls_no_land(&run), || ictc(&run, &opts.upstream));
 
     match pls_no_land_result {
         Ok(result) => ret.diagnostics.extend(result),
@@ -90,7 +101,7 @@ fn run() -> anyhow::Result<()> {
             sarif::MessageBuilder::default()
                 .text(format!(
                     "{:?} files processed in {:?}",
-                    paths.len(),
+                    run.paths.len(),
                     start.elapsed()
                 ))
                 .build()
