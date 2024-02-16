@@ -24,13 +24,14 @@ struct Cli {
     upstream: String,
 
     #[clap(long)]
-    #[arg(default_value_t = String::from(""))]
-    results: String,
+    /// optional path to write results to
+    results: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]
 enum Subcommands {
     // print default config for toolbox
+    /// Generate default configuration content for toolbox
     Genconfig {},
 }
 
@@ -151,10 +152,10 @@ fn run() -> anyhow::Result<()> {
 
     let sarif = serde_json::to_string_pretty(&sarif_built)?;
 
-    if cli.results.is_empty() {
-        println!("{}", sarif);
+    if let Some(outfile) = &cli.results {
+        std::fs::write(outfile, sarif)?;
     } else {
-        std::fs::write(cli.results, sarif)?;
+        println!("{}", sarif);
     }
 
     Ok(())
