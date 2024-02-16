@@ -13,8 +13,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Cargo Test
-        run: cargo test
+      - name: Install nextest
+        run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+
+      - name: Run tests
+        run: cargo nextest run --profile=ci
+
+      - name: Upload test results
+        # Run this step even if the test step ahead fails
+        if: "!cancelled()"
+        uses: trunk-io/analytics-uploader@main
+        with:
+          junit-paths: ${{ github.workspace }}/target/nextest/ci/*junit.xml
+          org-slug: trunk
+          token: ${{ secrets.TRUNK_PROD_ORG_API_TOKEN }}
+        continue-on-error: true
 
   trunk_check_runner:
     name: Trunk Check runner [linux]

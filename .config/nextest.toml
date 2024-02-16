@@ -1,0 +1,25 @@
+[store]
+dir = "target/nextest"
+
+# This section defines the default nextest profile. Custom profiles are layered
+# on top of the default profile.
+[profile.default]
+retries = 0
+test-threads = "num-cpus"
+threads-required = 1
+status-level = "pass"
+final-status-level = "flaky"
+failure-output = "immediate"
+success-output = "never"
+fail-fast = true
+slow-timeout = { period = "60s" }
+
+[profile.ci]
+fail-fast = false
+
+[profile.ci.junit]
+path = "junit.xml"
+
+report-name = "nextest-run"
+store-success-output = false
+store-failure-output = true
