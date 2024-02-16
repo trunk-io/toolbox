@@ -7,15 +7,15 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'horton'",
+      "name": "Debug toolbox",
       "cargo": {
-        "args": ["build", "--bin=horton", "--package=horton"],
+        "args": ["build", "--bin=trunk-toolbox"],
         "filter": {
-          "name": "horton",
+          "name": "trunk-toolbox",
           "kind": "bin"
         }
       },
-      "args": ["--file", "${workspaceFolder}/src/main.rs"],
+      "args": ["tests/if_change_then_change/basic_ictc.file"],
       "cwd": "${workspaceFolder}"
     }
   ]
