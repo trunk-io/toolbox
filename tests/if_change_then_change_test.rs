@@ -370,7 +370,7 @@ fn verify_find_ictc_blocks() {
     assert_eq!(first.begin, Some(6));
     assert_eq!(first.end, Some(10));
     match &first.thenchange {
-        ThenChange::RepoFile(path) => {
+        Some(ThenChange::RepoFile(path)) => {
             assert_eq!(*path, PathBuf::from("foo.bar"));
         }
         _ => {
@@ -382,7 +382,7 @@ fn verify_find_ictc_blocks() {
     assert_eq!(second.begin, Some(16));
     assert_eq!(second.end, Some(18));
     match &second.thenchange {
-        ThenChange::RepoFile(path) => {
+        Some(ThenChange::RepoFile(path)) => {
             assert_eq!(*path, PathBuf::from("path/to/file/something.else"));
         }
         _ => {
