@@ -24,8 +24,8 @@ pub enum ThenChange {
 #[derive(Debug)]
 pub struct IctcBlock {
     pub path: PathBuf,
-    pub begin: i64,
-    pub end: i64,
+    pub begin: Option<u64>,
+    pub end: Option<u64>,
     pub thenchange: ThenChange,
 }
 
@@ -34,11 +34,11 @@ impl IctcBlock {
         diagnostic::Range {
             path: self.path.to_str().unwrap().to_string(),
             start: diagnostic::Position {
-                line: self.begin as u64,
+                line: self.begin.unwrap(),
                 character: 0,
             },
             end: diagnostic::Position {
-                line: self.end as u64,
+                line: self.end.unwrap(),
                 character: 0,
             },
         }
@@ -64,6 +64,7 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
         .enumerate()
         .map(|(i, line)| (i + 1, line))
     {
+        let line_no = Some(i as u64);
         if RE_BEGIN.find(line).is_some() {
             if let Some(mut block_value) = block {
                 // Two if blocks in a row - report problem
@@ -74,13 +75,13 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
 
             block = Some(IctcBlock {
                 path: path.clone(),
-                begin: i as i64,
-                end: -1,
+                begin: line_no,
+                end: None,
                 thenchange: ThenChange::None,
             });
         } else if let Some(end_capture) = RE_END.captures(line) {
             if let Some(mut block_value) = block {
-                block_value.end = i as i64;
+                block_value.end = line_no;
                 block_value.thenchange = ThenChange::RepoFile(PathBuf::from(
                     end_capture
                         .get(2)
@@ -94,8 +95,8 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
                 // block is None and we found a IfChange without a ThenChange
                 blocks.push(IctcBlock {
                     path: path.clone(),
-                    begin: i as i64,
-                    end: i as i64,
+                    begin: line_no,
+                    end: line_no,
                     thenchange: ThenChange::MissingIf,
                 });
             }
@@ -137,7 +138,7 @@ pub fn ictc(
 
     // TODO(sam): this _should_ be a iter-map-collect, but unclear how to apply a reducer
     // between the map and collect (there can be multiple hunks with the same path)
-    let mut modified_lines_by_path: HashMap<PathBuf, HashSet<i64>> = HashMap::new();
+    let mut modified_lines_by_path: HashMap<PathBuf, HashSet<u64>> = HashMap::new();
     for h in hunks {
         modified_lines_by_path
             .entry(h.path.clone())
@@ -157,13 +158,15 @@ pub fn ictc(
                 blocks.push(block);
             }
             _ => {
-                let block_lines = HashSet::from_iter(block.begin..block.end);
-                if !block_lines.is_disjoint(
-                    modified_lines_by_path
-                        .get(&block.path)
-                        .unwrap_or(&HashSet::new()),
-                ) {
-                    blocks.push(block);
+                if let (Some(begin), Some(end)) = (block.begin, block.end) {
+                    let block_lines = HashSet::from_iter(begin..end);
+                    if !block_lines.is_disjoint(
+                        modified_lines_by_path
+                            .get(&block.path)
+                            .unwrap_or(&HashSet::new()),
+                    ) {
+                        blocks.push(block);
+                    }
                 }
             }
         }

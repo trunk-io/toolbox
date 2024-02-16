@@ -367,8 +367,8 @@ fn verify_find_ictc_blocks() {
     assert!(list.len() == 2, "should find two ictc block");
     // assert!(list[0].begin == 1, "first block should point to 2");
     let first = &list[0];
-    assert_eq!(first.begin, 6);
-    assert_eq!(first.end, 10);
+    assert_eq!(first.begin, Some(6));
+    assert_eq!(first.end, Some(10));
     match &first.thenchange {
         ThenChange::RepoFile(path) => {
             assert_eq!(*path, PathBuf::from("foo.bar"));
@@ -379,8 +379,8 @@ fn verify_find_ictc_blocks() {
     };
 
     let second = &list[1];
-    assert_eq!(second.begin, 16);
-    assert_eq!(second.end, 18);
+    assert_eq!(second.begin, Some(16));
+    assert_eq!(second.end, Some(18));
     match &second.thenchange {
         ThenChange::RepoFile(path) => {
             assert_eq!(*path, PathBuf::from("path/to/file/something.else"));
