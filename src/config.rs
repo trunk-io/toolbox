@@ -1,3 +1,4 @@
+// trunk-ignore-all(trunk-toolbox/do-not-land)
 use confique::Config;
 
 #[derive(Config)]
@@ -6,7 +7,7 @@ pub struct Conf {
     pub ifchange: IfChangeConf,
 
     #[config(nested)]
-    pub plsnoland: PlsNoLandConf,
+    pub donotland: PlsNotLandConf,
 }
 
 #[derive(Config)]
@@ -16,7 +17,7 @@ pub struct IfChangeConf {
 }
 
 #[derive(Config)]
-pub struct PlsNoLandConf {
+pub struct PlsNotLandConf {
     #[config(default = true)]
     pub enabled: bool,
 }

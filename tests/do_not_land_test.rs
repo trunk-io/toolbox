@@ -54,3 +54,29 @@ fn binary_files_ignored() -> anyhow::Result<()> {
     );
     Ok(())
 }
+
+#[test]
+fn honor_disabled_in_config() -> anyhow::Result<()> {
+    let test_repo = TestRepo::make()?;
+    test_repo.write("alpha.foo", "do-not-land\n".as_bytes());
+    test_repo.git_add_all()?;
+
+    {
+        let horton = test_repo.run_horton()?;
+        assert_that(&horton.stdout).contains("Found 'do-not-land'");
+    }
+
+    let config = r#"
+        [donotland]
+        enabled = false
+    "#;
+
+    // Now disable the rule
+    test_repo.write("toolbox.toml", config.as_bytes());
+    {
+        let horton = test_repo.run_horton().unwrap();
+        assert_that(&horton.stdout.contains("Found 'do-not-land'")).is_false();
+    }
+
+    Ok(())
+}

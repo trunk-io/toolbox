@@ -1,4 +1,5 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
+use confique::toml::{self, FormatOptions};
 use confique::Config;
 use horton::config::Conf;
 use horton::diagnostic;
@@ -11,7 +12,10 @@ use std::path::PathBuf;
 use std::time::Instant;
 #[derive(Parser, Debug)]
 #[clap(version = env!("CARGO_PKG_VERSION"), author = "Trunk Technologies Inc.")]
-struct Opts {
+struct Cli {
+    #[command(subcommand)]
+    subcommand: Option<Subcommands>,
+
     // #[arg(short, long, num_args = 1..)]
     files: Vec<String>,
 
@@ -24,9 +28,21 @@ struct Opts {
     results: String,
 }
 
+#[derive(Subcommand, Debug)]
+enum Subcommands {
+    // print default config for toolbox
+    Genconfig {},
+}
+
 fn run() -> anyhow::Result<()> {
     let start = Instant::now();
-    let opts: Opts = Opts::parse();
+    let cli: Cli = Cli::parse();
+
+    if let Some(Subcommands::Genconfig {}) = &cli.subcommand {
+        let default_config = toml::template::<Conf>(FormatOptions::default());
+        println!("{}", default_config);
+        return Ok(());
+    }
 
     let mut ret = diagnostic::Diagnostics::default();
 
@@ -37,12 +53,12 @@ fn run() -> anyhow::Result<()> {
         .load()?;
 
     let run: Run = Run {
-        paths: opts.files.into_iter().map(PathBuf::from).collect(),
+        paths: cli.files.into_iter().map(PathBuf::from).collect(),
         config,
     };
 
     let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
-        rayon::join(|| pls_no_land(&run), || ictc(&run, &opts.upstream));
+        rayon::join(|| pls_no_land(&run), || ictc(&run, &cli.upstream));
 
     match pls_no_land_result {
         Ok(result) => ret.diagnostics.extend(result),
@@ -135,10 +151,10 @@ fn run() -> anyhow::Result<()> {
 
     let sarif = serde_json::to_string_pretty(&sarif_built)?;
 
-    if opts.results.is_empty() {
+    if cli.results.is_empty() {
         println!("{}", sarif);
     } else {
-        std::fs::write(opts.results, sarif)?;
+        std::fs::write(cli.results, sarif)?;
     }
 
     Ok(())

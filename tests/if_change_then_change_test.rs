@@ -349,33 +349,31 @@ fn assert_localfile_notfound() {
 
 #[test]
 fn honor_disabled_in_config() {
-    let revisions = [
-        r#"
-initial
-preceding
-lines
-// IfChange
-delta = "initial value"
-// ThenChange constant.foo
-and then
-trailing lines
-"#,
-        r#"
-now
-there
-are
-more
-preceding
-lines
-// IfChange
-delta = "new value"
-// ThenChange constant.foo
-and then
-trailing lines
-"#,
-    ];
+    let test_repo = TestRepo::make().unwrap();
+    test_repo.write("revision.foo", "".as_bytes());
+    test_repo.git_commit_all("create constant.foo and revision.foo");
 
-    assert_expected_change_in_constant_foo(revisions)
+    let bad = r#"
+        // IfChange
+    "#;
+
+    let config = r#"
+        [ifchange]
+        enabled = false
+    "#;
+
+    {
+        test_repo.write("revision.foo", bad.as_bytes());
+        let horton = test_repo.run_horton().unwrap();
+        assert_that(&horton.stdout).contains("if-change");
+    }
+
+    // Now disable the rule
+    test_repo.write("toolbox.toml", config.as_bytes());
+    {
+        let horton = test_repo.run_horton().unwrap();
+        assert_that(&horton.stdout.contains("if-change")).is_false();
+    }
 }
 
 #[test]

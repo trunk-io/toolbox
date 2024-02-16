@@ -26,7 +26,7 @@ pub fn is_binary_file(path: &PathBuf) -> std::io::Result<bool> {
 //
 // Note that this is named "pls_no_land" to avoid causing DNL matches everywhere in trunk-toolbox.
 pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
-    let config = &run.config.plsnoland;
+    let config = &run.config.donotland;
     if !config.enabled {
         return Ok(vec![]);
     }
