@@ -151,10 +151,7 @@ pub fn ictc(
 
     for block in all_blocks {
         match &block.thenchange {
-            ThenChange::MissingIf => {
-                blocks.push(block);
-            }
-            ThenChange::MissingThen => {
+            ThenChange::MissingIf | ThenChange::MissingThen => {
                 blocks.push(block);
             }
             _ => {
@@ -180,15 +177,14 @@ pub fn ictc(
     for block in &blocks {
         match &block.thenchange {
             ThenChange::RemoteFile(remote_file) => {
-                // Handle the case where `thenchange` is a `RemoteFile`
-                println!("Remote file: {}", remote_file);
+                todo!("build support for remote file")
             }
             ThenChange::RepoFile(local_file) => {
                 // Check if the repo file exists - if it was deleted this is a warning
                 if !Path::new(local_file).exists() {
                     diagnostics.push(diagnostic::Diagnostic {
                         range: block.get_range(),
-                        severity: diagnostic::Severity::Error,
+                        severity: diagnostic::Severity::Warning,
                         code: "if-change-file-does-not-exist".to_string(),
                         message: format!("ThenChange {} does not exist", local_file.display(),),
                     });
@@ -208,10 +204,7 @@ pub fn ictc(
                 }
             }
 
-            ThenChange::None => {
-                // Handle the case where `thenchange` is `None`
-                println!("No change");
-            }
+            ThenChange::None => panic("ThenChange should always be set"),
             ThenChange::MissingIf => {
                 diagnostics.push(diagnostic::Diagnostic {
                     range: block.get_range(),
