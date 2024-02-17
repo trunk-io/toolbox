@@ -2,7 +2,7 @@ version: 0.1
 plugins:
   sources:
     - id: trunk
-      ref: v1.4.2
+      ref: v1.4.3
       uri: https://github.com/trunk-io/plugins
 runtimes:
   enabled:
@@ -11,30 +11,13 @@ runtimes:
     - node@18.12.1
     - rust@1.76.0
 cli:
-  version: 1.19.0
+  version: 1.20.0
 api:
   address: api.trunk-staging.io:8443
 
-downloads:
-  - name: trunk-toolbox
-    version: 0.0.1
-    downloads:
-      - version: 0.0.1
-        os:
-          linux: unknown-linux-gnu
-          macos: apple-darwin
-        cpu:
-          x86_64: x86_64
-          arm_64: aarch64
-        url: https://github.com/trunk-io/toolbox/releases/download/${version}/trunk-toolbox-${version}-${cpu}-${os}.tar.gz
 tools:
   enabled:
-    - gh@2.43.1
-  definitions:
-    - name: trunk-toolbox
-      download: trunk-toolbox
-      shims: [trunk-toolbox]
-      known_good_version: 0.0.1
+    - gh@2.44.1
   runtimes:
     - rust
 lint:
@@ -64,12 +47,12 @@ lint:
   enabled:
     - shellcheck@0.9.0
     - shfmt@3.6.0
-    - trunk-toolbox@0.0.1
-    - checkov@3.2.19
+    - trunk-toolbox@0.2.0
+    - checkov@3.2.21
     - trivy@0.49.1
-    - trufflehog@3.67.5
+    - trufflehog@3.67.6
     - oxipng@9.0.0
-    - yamllint@1.34.0
+    - yamllint@1.35.0
     - git-diff-check
     - taplo@0.8.1
     - actionlint@1.6.26
