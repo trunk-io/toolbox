@@ -51,6 +51,7 @@ fn run() -> anyhow::Result<()> {
         .env()
         .file("toolbox.toml")
         .file(".config/toolbox.toml")
+        .file(".trunk/config/toolbox.toml")
         .load()?;
 
     let run: Run = Run {
