@@ -31,8 +31,15 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
         return Ok(vec![]);
     }
 
+    // Filter out well known files that should have the word donotland in them (like toolbox.toml)
+    let filtered_paths: Vec<_> = run
+        .paths
+        .iter()
+        .filter(|path| path.file_name().unwrap_or_default() != "toolbox.toml")
+        .collect();
+
     // Scan files in parallel
-    let results: Result<Vec<_>, _> = run.paths.par_iter().map(pls_no_land_impl).collect();
+    let results: Result<Vec<_>, _> = filtered_paths.par_iter().map(pls_no_land_impl).collect();
 
     match results {
         Ok(v) => Ok(v.into_iter().flatten().collect()),
