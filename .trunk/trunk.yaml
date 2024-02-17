@@ -28,6 +28,8 @@ downloads:
           arm_64: aarch64
         url: https://github.com/trunk-io/toolbox/releases/download/${version}/trunk-toolbox-${version}-${cpu}-${os}.tar.gz
 tools:
+  enabled:
+    - gh@2.43.1
   definitions:
     - name: trunk-toolbox
       download: trunk-toolbox
@@ -54,6 +56,10 @@ lint:
       environment:
         - name: PATH
           list: ["${linter}"]
+  ignore:
+    - linters: [trunk-toolbox]
+      paths:
+        - tests/**
 
   enabled:
     - shellcheck@0.9.0

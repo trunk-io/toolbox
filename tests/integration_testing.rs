@@ -80,14 +80,14 @@ impl TestRepo {
         Ok(TestRepo { dir })
     }
 
-    pub fn write(&self, relpath: &str, data: &[u8]) -> anyhow::Result<()> {
+    pub fn write(&self, relpath: &str, data: &[u8]) {
         let path = {
             let mut path = self.dir.path().to_path_buf();
             path.push(relpath);
             path
         };
 
-        Ok(fs::write(&path, data).expect(format!("Unable to write {:#?}", path).as_str()))
+        fs::write(&path, data).expect(format!("Unable to write {:#?}", path).as_str());
     }
 
     pub fn git_add_all(&self) -> anyhow::Result<()> {
@@ -100,17 +100,18 @@ impl TestRepo {
         Ok(())
     }
 
-    pub fn git_commit_all(&self, message: &str) -> anyhow::Result<()> {
-        self.git_add_all()?;
+    pub fn git_commit_all(&self, message: &str) {
+        self.git_add_all().expect("add worked");
 
-        Command::new("git")
+        let output = Command::new("git")
             .arg("commit")
             .arg("-m")
             .arg(message)
             .current_dir(self.dir.path())
-            .output()?;
+            .output()
+            .expect("Failed to execute git command");
 
-        Ok(())
+        assert!(output.status.success(), "Git commit failed");
     }
 
     pub fn run_horton(&self) -> anyhow::Result<HortonOutput> {
