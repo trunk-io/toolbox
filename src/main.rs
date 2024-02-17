@@ -52,7 +52,11 @@ fn run() -> anyhow::Result<()> {
         .file("toolbox.toml")
         .file(".config/toolbox.toml")
         .file(".trunk/config/toolbox.toml")
-        .load()?;
+        .load()
+        .unwrap_or_else(|err| {
+            eprintln!("Toolbox cannot run: {}", err);
+            std::process::exit(1);
+        });
 
     let run: Run = Run {
         paths: cli.files.into_iter().map(PathBuf::from).collect(),
