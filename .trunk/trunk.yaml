@@ -15,26 +15,9 @@ cli:
 api:
   address: api.trunk-staging.io:8443
 
-downloads:
-  - name: trunk-toolbox
-    version: 0.0.1
-    downloads:
-      - version: 0.0.1
-        os:
-          linux: unknown-linux-gnu
-          macos: apple-darwin
-        cpu:
-          x86_64: x86_64
-          arm_64: aarch64
-        url: https://github.com/trunk-io/toolbox/releases/download/${version}/trunk-toolbox-${version}-${cpu}-${os}.tar.gz
 tools:
   enabled:
     - gh@2.44.1
-  definitions:
-    - name: trunk-toolbox
-      download: trunk-toolbox
-      shims: [trunk-toolbox]
-      known_good_version: 0.0.1
   runtimes:
     - rust
 lint:
