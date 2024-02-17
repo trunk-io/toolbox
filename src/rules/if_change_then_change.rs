@@ -95,12 +95,13 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
                 // block is None and we found a IfChange without a ThenChange
                 blocks.push(IctcBlock {
                     path: path.clone(),
-                    begin: i as i64,
-                    end: i as i64,
-                    thenchange: ThenChange::MissingIf,
+                    begin: line_no,
+                    end: line_no,
+                    thenchange: Some(ThenChange::MissingIf),
                 });
             }
         }
+    }
 
     // If we have an unclosed block - record that
     if let Some(mut block_value) = block {
