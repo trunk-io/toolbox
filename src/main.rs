@@ -1,47 +1,21 @@
-use clap::{Parser, Subcommand};
-use confique::toml::{self, FormatOptions};
+use clap::Parser;
 use confique::Config;
 use horton::config::Conf;
 use horton::diagnostic;
 use horton::rules::if_change_then_change::ictc;
 use horton::rules::pls_no_land::pls_no_land;
-use horton::run::Run;
+use horton::run::{Cli, Run, Subcommands};
 
 use serde_sarif::sarif;
 use std::path::PathBuf;
 use std::time::Instant;
-#[derive(Parser, Debug)]
-#[clap(version = env!("CARGO_PKG_VERSION"), author = "Trunk Technologies Inc.")]
-struct Cli {
-    #[command(subcommand)]
-    subcommand: Option<Subcommands>,
-
-    // #[arg(short, long, num_args = 1..)]
-    files: Vec<String>,
-
-    #[clap(long)]
-    #[arg(default_value_t = String::from("HEAD"))]
-    upstream: String,
-
-    #[clap(long)]
-    /// optional path to write results to
-    results: Option<String>,
-}
-
-#[derive(Subcommand, Debug)]
-enum Subcommands {
-    // print default config for toolbox
-    /// Generate default configuration content for toolbox
-    Genconfig {},
-}
 
 fn run() -> anyhow::Result<()> {
     let start = Instant::now();
     let cli: Cli = Cli::parse();
 
     if let Some(Subcommands::Genconfig {}) = &cli.subcommand {
-        let default_config = toml::template::<Conf>(FormatOptions::default());
-        println!("{}", default_config);
+        Conf::print_default();
         return Ok(());
     }
 
