@@ -19,15 +19,14 @@ pub enum ThenChange {
     RepoFile(PathBuf),
     MissingIf,
     MissingThen,
-    None,
 }
 
 #[derive(Debug)]
 pub struct IctcBlock {
     pub path: PathBuf,
-    pub begin: i64,
-    pub end: i64,
-    pub thenchange: ThenChange,
+    pub begin: Option<u64>,
+    pub end: Option<u64>,
+    pub thenchange: Option<ThenChange>,
 }
 
 impl IctcBlock {
@@ -35,11 +34,11 @@ impl IctcBlock {
         diagnostic::Range {
             path: self.path.to_str().unwrap().to_string(),
             start: diagnostic::Position {
-                line: self.begin as u64,
+                line: self.begin.unwrap(),
                 character: 0,
             },
             end: diagnostic::Position {
-                line: self.end as u64,
+                line: self.end.unwrap(),
                 character: 0,
             },
         }
@@ -65,30 +64,31 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
         .enumerate()
         .map(|(i, line)| (i + 1, line))
     {
+        let line_no = Some(i as u64);
         if RE_BEGIN.find(line).is_some() {
             if let Some(mut block_value) = block {
                 // Two if blocks in a row - report problem
                 block_value.end = block_value.begin;
-                block_value.thenchange = ThenChange::MissingThen;
+                block_value.thenchange = Some(ThenChange::MissingThen);
                 blocks.push(block_value);
             }
 
             block = Some(IctcBlock {
                 path: path.clone(),
-                begin: i as i64,
-                end: -1,
-                thenchange: ThenChange::None,
+                begin: line_no,
+                end: None,
+                thenchange: None,
             });
         } else if let Some(end_capture) = RE_END.captures(line) {
             if let Some(mut block_value) = block {
-                block_value.end = i as i64;
-                block_value.thenchange = ThenChange::RepoFile(PathBuf::from(
+                block_value.end = line_no;
+                block_value.thenchange = Some(ThenChange::RepoFile(PathBuf::from(
                     end_capture
                         .get(2)
                         .with_context(|| "expected at least 3 captures")?
                         .as_str()
                         .trim(),
-                ));
+                )));
                 blocks.push(block_value);
                 block = None;
             } else {
@@ -101,12 +101,11 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
                 });
             }
         }
-    }
 
     // If we have an unclosed block - record that
     if let Some(mut block_value) = block {
         block_value.end = block_value.begin;
-        block_value.thenchange = ThenChange::MissingThen;
+        block_value.thenchange = Some(ThenChange::MissingThen);
         blocks.push(block_value);
     }
 
@@ -142,7 +141,7 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
 
     // TODO(sam): this _should_ be a iter-map-collect, but unclear how to apply a reducer
     // between the map and collect (there can be multiple hunks with the same path)
-    let mut modified_lines_by_path: HashMap<PathBuf, HashSet<i64>> = HashMap::new();
+    let mut modified_lines_by_path: HashMap<PathBuf, HashSet<u64>> = HashMap::new();
     for h in hunks {
         modified_lines_by_path
             .entry(h.path.clone())
@@ -154,21 +153,22 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
     let mut blocks: Vec<IctcBlock> = Vec::new();
 
     for block in all_blocks {
-        match &block.thenchange {
-            ThenChange::MissingIf => {
-                blocks.push(block);
-            }
-            ThenChange::MissingThen => {
-                blocks.push(block);
-            }
-            _ => {
-                let block_lines = HashSet::from_iter(block.begin..block.end);
-                if !block_lines.is_disjoint(
-                    modified_lines_by_path
-                        .get(&block.path)
-                        .unwrap_or(&HashSet::new()),
-                ) {
+        if let Some(thenchange) = &block.thenchange {
+            match &thenchange {
+                ThenChange::MissingIf | ThenChange::MissingThen => {
                     blocks.push(block);
+                }
+                _ => {
+                    if let (Some(begin), Some(end)) = (block.begin, block.end) {
+                        let block_lines = HashSet::from_iter(begin..end);
+                        if !block_lines.is_disjoint(
+                            modified_lines_by_path
+                                .get(&block.path)
+                                .unwrap_or(&HashSet::new()),
+                        ) {
+                            blocks.push(block);
+                        }
+                    }
                 }
             }
         }
@@ -180,55 +180,51 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
     let mut diagnostics: Vec<diagnostic::Diagnostic> = Vec::new();
 
     for block in &blocks {
-        match &block.thenchange {
-            ThenChange::RemoteFile(remote_file) => {
-                // Handle the case where `thenchange` is a `RemoteFile`
-                println!("Remote file: {}", remote_file);
-            }
-            ThenChange::RepoFile(local_file) => {
-                // Check if the repo file exists - if it was deleted this is a warning
-                if !Path::new(local_file).exists() {
+        if let Some(change) = &block.thenchange {
+            match change {
+                ThenChange::RemoteFile(_remote_file) => {
+                    todo!("build support for remote file")
+                }
+                ThenChange::RepoFile(local_file) => {
+                    // Check if the repo file exists - if it was deleted this is a warning
+                    if !Path::new(local_file).exists() {
+                        diagnostics.push(diagnostic::Diagnostic {
+                            range: block.get_range(),
+                            severity: diagnostic::Severity::Warning,
+                            code: "if-change-file-does-not-exist".to_string(),
+                            message: format!("ThenChange {} does not exist", local_file.display(),),
+                        });
+                    }
+                    // If target file was not changed raise issue
+                    if blocks_by_path.get(&local_file).is_none() {
+                        diagnostics.push(diagnostic::Diagnostic {
+                            range: block.get_range(),
+                            severity: diagnostic::Severity::Error,
+                            code: "if-change-then-change-this".to_string(),
+                            message: format!(
+                                "Expected change in {} because {} was modified",
+                                local_file.display(),
+                                block.path.display(),
+                            ),
+                        });
+                    }
+                }
+                ThenChange::MissingIf => {
                     diagnostics.push(diagnostic::Diagnostic {
                         range: block.get_range(),
-                        severity: diagnostic::Severity::Error,
-                        code: "if-change-file-does-not-exist".to_string(),
-                        message: format!("ThenChange {} does not exist", local_file.display(),),
+                        severity: diagnostic::Severity::Warning,
+                        code: "if-change-mismatched".to_string(),
+                        message: "Expected preceding IfChange tag".to_string(),
                     });
                 }
-                // If target file was not changed raise issue
-                if blocks_by_path.get(&local_file).is_none() {
+                ThenChange::MissingThen => {
                     diagnostics.push(diagnostic::Diagnostic {
                         range: block.get_range(),
-                        severity: diagnostic::Severity::Error,
-                        code: "if-change-then-change-this".to_string(),
-                        message: format!(
-                            "Expected change in {} because {} was modified",
-                            local_file.display(),
-                            block.path.display(),
-                        ),
+                        severity: diagnostic::Severity::Warning,
+                        code: "if-change-mismatched".to_string(),
+                        message: "Expected matching ThenChange tag".to_string(),
                     });
                 }
-            }
-
-            ThenChange::None => {
-                // Handle the case where `thenchange` is `None`
-                println!("No change");
-            }
-            ThenChange::MissingIf => {
-                diagnostics.push(diagnostic::Diagnostic {
-                    range: block.get_range(),
-                    severity: diagnostic::Severity::Warning,
-                    code: "if-change-mismatched".to_string(),
-                    message: "Expected preceding IfChange tag".to_string(),
-                });
-            }
-            ThenChange::MissingThen => {
-                diagnostics.push(diagnostic::Diagnostic {
-                    range: block.get_range(),
-                    severity: diagnostic::Severity::Warning,
-                    code: "if-change-mismatched".to_string(),
-                    message: "Expected matching ThenChange tag".to_string(),
-                });
             }
         }
     }

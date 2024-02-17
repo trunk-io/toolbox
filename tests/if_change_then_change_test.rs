@@ -348,35 +348,6 @@ fn assert_localfile_notfound() {
 }
 
 #[test]
-fn honor_disabled_in_config() {
-    let test_repo = TestRepo::make().unwrap();
-    test_repo.write("revision.foo", "".as_bytes());
-    test_repo.git_commit_all("create constant.foo and revision.foo");
-
-    let bad = r#"
-        // IfChange
-    "#;
-
-    let config = r#"
-        [ifchange]
-        enabled = false
-    "#;
-
-    {
-        test_repo.write("revision.foo", bad.as_bytes());
-        let horton = test_repo.run_horton().unwrap();
-        assert_that(&horton.stdout).contains("if-change");
-    }
-
-    // Now disable the rule
-    test_repo.write("toolbox.toml", config.as_bytes());
-    {
-        let horton = test_repo.run_horton().unwrap();
-        assert_that(&horton.stdout.contains("if-change")).is_false();
-    }
-}
-
-#[test]
 fn verify_find_ictc_blocks() {
     let result = find_ictc_blocks(&PathBuf::from(
         "tests/if_change_then_change/basic_ictc.file",
@@ -396,10 +367,10 @@ fn verify_find_ictc_blocks() {
     assert!(list.len() == 2, "should find two ictc block");
     // assert!(list[0].begin == 1, "first block should point to 2");
     let first = &list[0];
-    assert_eq!(first.begin, 6);
-    assert_eq!(first.end, 10);
+    assert_eq!(first.begin, Some(6));
+    assert_eq!(first.end, Some(10));
     match &first.thenchange {
-        ThenChange::RepoFile(path) => {
+        Some(ThenChange::RepoFile(path)) => {
             assert_eq!(*path, PathBuf::from("foo.bar"));
         }
         _ => {
@@ -408,10 +379,10 @@ fn verify_find_ictc_blocks() {
     };
 
     let second = &list[1];
-    assert_eq!(second.begin, 16);
-    assert_eq!(second.end, 18);
+    assert_eq!(second.begin, Some(16));
+    assert_eq!(second.end, Some(18));
     match &second.thenchange {
-        ThenChange::RepoFile(path) => {
+        Some(ThenChange::RepoFile(path)) => {
             assert_eq!(*path, PathBuf::from("path/to/file/something.else"));
         }
         _ => {

@@ -7,10 +7,10 @@ pub struct Hunk {
     pub path: PathBuf,
 
     /// 1-indexed line number, inclusive
-    pub begin: i64,
+    pub begin: u64,
 
     /// 1-indexed line number, exclusive
-    pub end: i64,
+    pub end: u64,
 }
 
 #[derive(Debug, Default)]
@@ -94,13 +94,13 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
                                         .map(|current_hunk| Hunk {
                                             path: current_hunk.path.clone(),
                                             begin: current_hunk.begin,
-                                            end: (new_lineno as i64) + 1,
+                                            end: (new_lineno as u64) + 1,
                                         })
                                         .or_else(|| {
                                             Some(Hunk {
                                                 path: path.to_path_buf(),
-                                                begin: new_lineno as i64,
-                                                end: (new_lineno as i64) + 1,
+                                                begin: new_lineno as u64,
+                                                end: (new_lineno as u64) + 1,
                                             })
                                         });
                                 } else if let Some(current_hunk) = &maybe_current_hunk {
