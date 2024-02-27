@@ -1,0 +1,7 @@
+# Configuration for trunk toolbox. Generate default by calling 'trunk-toolbox genconfig'
+
+[ifchange]
+enabled = true
+
+[donotland]
+enabled = true

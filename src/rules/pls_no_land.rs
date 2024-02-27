@@ -2,14 +2,14 @@
 extern crate regex;
 
 use crate::diagnostic;
+use crate::run::Run;
 use anyhow::Context;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 lazy_static::lazy_static! {
     static ref RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
@@ -22,12 +22,22 @@ pub fn is_binary_file(path: &PathBuf) -> std::io::Result<bool> {
     Ok(buffer[..n].contains(&0))
 }
 
+pub fn is_ignored_file(path: &Path) -> bool {
+    // Filter out well known files that should have the word donotland in them (like toolbox.toml)
+    path.file_name().map_or(false, |f| f == "toolbox.toml")
+}
+
 // Checks for $re and other forms thereof in source code
 //
 // Note that this is named "pls_no_land" to avoid causing DNL matches everywhere in trunk-toolbox.
-pub fn pls_no_land(paths: &HashSet<PathBuf>) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+    let config = &run.config.donotland;
+    if !config.enabled {
+        return Ok(vec![]);
+    }
+
     // Scan files in parallel
-    let results: Result<Vec<_>, _> = paths.par_iter().map(pls_no_land_impl).collect();
+    let results: Result<Vec<_>, _> = run.paths.par_iter().map(pls_no_land_impl).collect();
 
     match results {
         Ok(v) => Ok(v.into_iter().flatten().collect()),
@@ -38,6 +48,10 @@ pub fn pls_no_land(paths: &HashSet<PathBuf>) -> anyhow::Result<Vec<diagnostic::D
 fn pls_no_land_impl(path: &PathBuf) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     if is_binary_file(path).unwrap_or(true) {
         log::debug!("Ignoring binary file {}", path.display());
+        return Ok(vec![]);
+    }
+
+    if is_ignored_file(path) {
         return Ok(vec![]);
     }
 

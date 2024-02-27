@@ -1,37 +1,44 @@
 use clap::Parser;
+use confique::Config;
+use horton::config::Conf;
 use horton::diagnostic;
 use horton::rules::if_change_then_change::ictc;
 use horton::rules::pls_no_land::pls_no_land;
+use horton::run::{Cli, Run, Subcommands};
+
 use serde_sarif::sarif;
-use std::collections::HashSet;
 use std::path::PathBuf;
 use std::time::Instant;
-#[derive(Parser, Debug)]
-#[clap(version = env!("CARGO_PKG_VERSION"), author = "Trunk Technologies Inc.")]
-struct Opts {
-    // #[arg(short, long, num_args = 1..)]
-    files: Vec<String>,
-
-    #[clap(long)]
-    #[arg(default_value_t = String::from("HEAD"))]
-    upstream: String,
-
-    #[clap(long)]
-    #[arg(default_value_t = String::from(""))]
-    results: String,
-}
 
 fn run() -> anyhow::Result<()> {
     let start = Instant::now();
-    let opts: Opts = Opts::parse();
+    let cli: Cli = Cli::parse();
+
+    if let Some(Subcommands::Genconfig {}) = &cli.subcommand {
+        Conf::print_default();
+        return Ok(());
+    }
 
     let mut ret = diagnostic::Diagnostics::default();
 
-    // Convert to PathBufs
-    let paths: HashSet<PathBuf> = opts.files.into_iter().map(PathBuf::from).collect();
+    let config = Conf::builder()
+        .env()
+        .file("toolbox.toml")
+        .file(".config/toolbox.toml")
+        .file(".trunk/config/toolbox.toml")
+        .load()
+        .unwrap_or_else(|err| {
+            eprintln!("Toolbox cannot run: {}", err);
+            std::process::exit(1);
+        });
+
+    let run = Run {
+        paths: cli.files.into_iter().map(PathBuf::from).collect(),
+        config,
+    };
 
     let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
-        rayon::join(|| pls_no_land(&paths), || ictc(&paths, &opts.upstream));
+        rayon::join(|| pls_no_land(&run), || ictc(&run, &cli.upstream));
 
     match pls_no_land_result {
         Ok(result) => ret.diagnostics.extend(result),
@@ -90,7 +97,7 @@ fn run() -> anyhow::Result<()> {
             sarif::MessageBuilder::default()
                 .text(format!(
                     "{:?} files processed in {:?}",
-                    paths.len(),
+                    run.paths.len(),
                     start.elapsed()
                 ))
                 .build()
@@ -124,10 +131,10 @@ fn run() -> anyhow::Result<()> {
 
     let sarif = serde_json::to_string_pretty(&sarif_built)?;
 
-    if opts.results.is_empty() {
-        println!("{}", sarif);
+    if let Some(outfile) = &cli.results {
+        std::fs::write(outfile, sarif)?;
     } else {
-        std::fs::write(opts.results, sarif)?;
+        println!("{}", sarif);
     }
 
     Ok(())
