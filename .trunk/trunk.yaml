@@ -27,7 +27,7 @@ lint:
       files: [ALL]
       commands:
         - name: lint
-          run: ${workspace}/toolbox-latest --upstream=${upstream-ref} --results=${tmpfile}  ${target}
+          run: ${workspace}/toolbox-latest --upstream=${upstream-ref} --results=${tmpfile} ${target}
           output: sarif
           batch: true
           success_codes: [0]
