@@ -14,13 +14,13 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            runs-on: [self-hosted, Linux]
+            runs-on: [ubuntu-20.04]
           - target: aarch64-unknown-linux-gnu
-            runs-on: [self-hosted, Linux]
+            runs-on: [ubuntu-20.04]
           - target: x86_64-apple-darwin
-            runs-on: [self-hosted, macOS]
+            runs-on: [macos-12]
           - target: aarch64-apple-darwin
-            runs-on: [self-hosted, macOS]
+            runs-on: [macos-12]
     runs-on: ${{ matrix.runs-on }}
 
     steps:
