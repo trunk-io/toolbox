@@ -32,7 +32,7 @@ fn run() -> anyhow::Result<()> {
             std::process::exit(1);
         });
 
-    let run: Run = Run {
+    let run = Run {
         paths: cli.files.into_iter().map(PathBuf::from).collect(),
         config,
     };

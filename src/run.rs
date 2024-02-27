@@ -10,7 +10,6 @@ pub struct Cli {
     #[command(subcommand)]
     pub subcommand: Option<Subcommands>,
 
-    // #[arg(short, long, num_args = 1..)]
     pub files: Vec<String>,
 
     #[clap(long)]
@@ -26,7 +25,7 @@ pub struct Cli {
 pub enum Subcommands {
     // print default config for toolbox
     /// Generate default configuration content for toolbox
-    Genconfig {},
+    Genconfig,
 }
 
 pub struct Run {

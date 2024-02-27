@@ -9,7 +9,7 @@ use regex::Regex;
 use std::fs::File;
 use std::io::Read;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 lazy_static::lazy_static! {
     static ref RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
@@ -20,6 +20,11 @@ pub fn is_binary_file(path: &PathBuf) -> std::io::Result<bool> {
     let mut buffer = [0; 4096];
     let n = file.read(&mut buffer)?;
     Ok(buffer[..n].contains(&0))
+}
+
+pub fn is_ignored_file(path: &Path) -> bool {
+    // Filter out well known files that should have the word donotland in them (like toolbox.toml)
+    path.file_name().map_or(false, |f| f == "toolbox.toml")
 }
 
 // Checks for $re and other forms thereof in source code
@@ -46,8 +51,7 @@ fn pls_no_land_impl(path: &PathBuf) -> anyhow::Result<Vec<diagnostic::Diagnostic
         return Ok(vec![]);
     }
 
-    // Filter out well known files that should have the word donotland in them (like toolbox.toml)
-    if path.file_name().map_or(false, |f| f == "toolbox.toml") {
+    if is_ignored_file(path) {
         return Ok(vec![]);
     }
 
