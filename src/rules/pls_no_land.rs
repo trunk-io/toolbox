@@ -1,6 +1,7 @@
-// trunk-ignore-all(trunk-toolbox/do-not-land)
+// trunk-ignore-all(trunk-toolbox/do-not-land,trunk-toolbox/todo)
 extern crate regex;
 
+use crate::config::Conf;
 use crate::diagnostic;
 use crate::run::Run;
 use anyhow::Context;
@@ -12,7 +13,8 @@ use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 lazy_static::lazy_static! {
-    static ref RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
+    static ref DNL_RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
+    static ref TODO_RE: Regex = Regex::new(r"(?i)((TODO|FIXME)\W)").unwrap();
 }
 
 pub fn is_binary_file(path: &PathBuf) -> std::io::Result<bool> {
@@ -31,13 +33,18 @@ pub fn is_ignored_file(path: &Path) -> bool {
 //
 // Note that this is named "pls_no_land" to avoid causing DNL matches everywhere in trunk-toolbox.
 pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
-    let config = &run.config.donotland;
-    if !config.enabled {
+    let dnl_config = &run.config.donotland;
+    let todo_config = &run.config.todo;
+    if !dnl_config.enabled && !todo_config.enabled {
         return Ok(vec![]);
     }
 
     // Scan files in parallel
-    let results: Result<Vec<_>, _> = run.paths.par_iter().map(pls_no_land_impl).collect();
+    let results: Result<Vec<_>, _> = run
+        .paths
+        .par_iter()
+        .map(|path| pls_no_land_impl(path, &run.config))
+        .collect();
 
     match results {
         Ok(v) => Ok(v.into_iter().flatten().collect()),
@@ -45,7 +52,7 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     }
 }
 
-fn pls_no_land_impl(path: &PathBuf) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+fn pls_no_land_impl(path: &PathBuf, config: &Conf) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     if is_binary_file(path).unwrap_or(true) {
         log::debug!("Ignoring binary file {}", path.display());
         return Ok(vec![]);
@@ -79,27 +86,51 @@ fn pls_no_land_impl(path: &PathBuf) -> anyhow::Result<Vec<diagnostic::Diagnostic
         .chain(lines_view.iter())
         .enumerate()
     {
-        if line.contains("trunk-ignore(|-begin|-end|-all)\\(trunk-toolbox/do-not-land\\)") {
-            continue;
+        if !line.contains("trunk-ignore(|-begin|-end|-all)\\(trunk-toolbox/(do-not-land)\\)")
+            && config.donotland.enabled
+        {
+            if let Some(m) = DNL_RE.find(line) {
+                ret.push(diagnostic::Diagnostic {
+                    range: diagnostic::Range {
+                        path: path.to_str().unwrap().to_string(),
+                        start: diagnostic::Position {
+                            line: i as u64,
+                            character: m.start() as u64,
+                        },
+                        end: diagnostic::Position {
+                            line: i as u64,
+                            character: m.end() as u64,
+                        },
+                    },
+                    severity: diagnostic::Severity::Error,
+                    code: "do-not-land".to_string(),
+                    message: format!("Found '{}'", m.as_str()),
+                });
+            }
         }
-
-        if let Some(m) = RE.find(line) {
-            ret.push(diagnostic::Diagnostic {
-                range: diagnostic::Range {
-                    path: path.to_str().unwrap().to_string(),
-                    start: diagnostic::Position {
-                        line: i as u64,
-                        character: m.start() as u64,
+        if !line.contains("trunk-ignore(|-begin|-end|-all)\\(trunk-toolbox/(todo)\\)")
+            && config.todo.enabled
+        {
+            if let Some(m) = TODO_RE.find(line) {
+                let token = &m.as_str()[..m.as_str().len() - 1];
+                ret.push(diagnostic::Diagnostic {
+                    range: diagnostic::Range {
+                        path: path.to_str().unwrap().to_string(),
+                        start: diagnostic::Position {
+                            line: i as u64,
+                            character: m.start() as u64,
+                        },
+                        end: diagnostic::Position {
+                            line: i as u64,
+                            // Remove one since we also check for a nonalpha character after the token.
+                            character: m.end() as u64 - 1,
+                        },
                     },
-                    end: diagnostic::Position {
-                        line: i as u64,
-                        character: m.end() as u64,
-                    },
-                },
-                severity: diagnostic::Severity::Error,
-                code: "do-not-land".to_string(),
-                message: format!("Found '{}'", m.as_str()),
-            });
+                    severity: diagnostic::Severity::Error,
+                    code: "todo".to_string(),
+                    message: format!("Found '{}'", token),
+                });
+            }
         }
     }
 

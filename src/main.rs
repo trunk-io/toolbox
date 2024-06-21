@@ -26,6 +26,7 @@ fn run() -> anyhow::Result<()> {
         .file("toolbox.toml")
         .file(".config/toolbox.toml")
         .file(".trunk/config/toolbox.toml")
+        .file(".trunk/configs/toolbox.toml")
         .load()
         .unwrap_or_else(|err| {
             eprintln!("Toolbox cannot run: {}", err);
