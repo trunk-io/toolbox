@@ -4,55 +4,33 @@ use horton::config::Conf;
 use horton::diagnostic;
 use horton::rules::if_change_then_change::ictc;
 use horton::rules::pls_no_land::pls_no_land;
-use horton::run::{Cli, Run, Subcommands};
+use horton::run::{Cli, OutputFormat, Run, Subcommands};
 
 use serde_sarif::sarif;
 use std::path::PathBuf;
 use std::time::Instant;
 
-fn run() -> anyhow::Result<()> {
-    let start = Instant::now();
-    let cli: Cli = Cli::parse();
+fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
+    return original_results
+        .diagnostics
+        .iter()
+        .map(|d| {
+            return format!(
+                "{}:{}:{}: {}",
+                d.range.path, d.range.start.line, d.range.start.character, d.message
+            );
+        })
+        .collect::<Vec<String>>()
+        .join("\n");
+}
 
-    if let Some(Subcommands::Genconfig {}) = &cli.subcommand {
-        Conf::print_default();
-        return Ok(());
-    }
-
-    let mut ret = diagnostic::Diagnostics::default();
-
-    let config = Conf::builder()
-        .env()
-        .file("toolbox.toml")
-        .file(".config/toolbox.toml")
-        .file(".trunk/config/toolbox.toml")
-        .file(".trunk/configs/toolbox.toml")
-        .load()
-        .unwrap_or_else(|err| {
-            eprintln!("Toolbox cannot run: {}", err);
-            std::process::exit(1);
-        });
-
-    let run = Run {
-        paths: cli.files.into_iter().map(PathBuf::from).collect(),
-        config,
-    };
-
-    let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
-        rayon::join(|| pls_no_land(&run), || ictc(&run, &cli.upstream));
-
-    match pls_no_land_result {
-        Ok(result) => ret.diagnostics.extend(result),
-        Err(e) => return Err(e),
-    }
-
-    match ictc_result {
-        Ok(result) => ret.diagnostics.extend(result),
-        Err(e) => return Err(e),
-    }
-
+fn generate_sarif_string(
+    original_results: &diagnostic::Diagnostics,
+    run_context: &Run,
+    start_time: &Instant,
+) -> anyhow::Result<String> {
     // TODO(sam): figure out how to stop using unwrap() inside the map() calls below
-    let mut results: Vec<sarif::Result> = ret
+    let mut results: Vec<sarif::Result> = original_results
         .diagnostics
         .iter()
         .map(|d| {
@@ -98,8 +76,8 @@ fn run() -> anyhow::Result<()> {
             sarif::MessageBuilder::default()
                 .text(format!(
                     "{:?} files processed in {:?}",
-                    run.paths.len(),
-                    start.elapsed()
+                    run_context.paths.len(),
+                    start_time.elapsed()
                 ))
                 .build()
                 .unwrap(),
@@ -131,11 +109,61 @@ fn run() -> anyhow::Result<()> {
         .build()?;
 
     let sarif = serde_json::to_string_pretty(&sarif_built)?;
+    return Ok(sarif);
+}
+
+fn run() -> anyhow::Result<()> {
+    let start = Instant::now();
+    let cli: Cli = Cli::parse();
+
+    if let Some(Subcommands::Genconfig {}) = &cli.subcommand {
+        Conf::print_default();
+        return Ok(());
+    }
+
+    let mut ret = diagnostic::Diagnostics::default();
+
+    let config = Conf::builder()
+        .env()
+        .file("toolbox.toml")
+        .file(".config/toolbox.toml")
+        .file(".trunk/config/toolbox.toml")
+        .file(".trunk/configs/toolbox.toml")
+        .load()
+        .unwrap_or_else(|err| {
+            eprintln!("Toolbox cannot run: {}", err);
+            std::process::exit(1);
+        });
+
+    let run = Run {
+        paths: cli.files.into_iter().map(PathBuf::from).collect(),
+        config,
+    };
+
+    let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
+        rayon::join(|| pls_no_land(&run), || ictc(&run, &cli.upstream));
+
+    match pls_no_land_result {
+        Ok(result) => ret.diagnostics.extend(result),
+        Err(e) => return Err(e),
+    }
+
+    match ictc_result {
+        Ok(result) => ret.diagnostics.extend(result),
+        Err(e) => return Err(e),
+    }
+
+    let output_string;
+    if cli.output_format == OutputFormat::Sarif {
+        output_string = generate_sarif_string(&ret, &run, &start)?;
+    } else {
+        output_string = generate_line_string(&ret);
+    }
 
     if let Some(outfile) = &cli.results {
-        std::fs::write(outfile, sarif)?;
+        std::fs::write(outfile, output_string)?;
     } else {
-        println!("{}", sarif);
+        println!("{}", output_string);
     }
 
     Ok(())
