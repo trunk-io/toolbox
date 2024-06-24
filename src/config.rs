@@ -1,4 +1,4 @@
-// trunk-ignore-all(trunk-toolbox/do-not-land)
+// trunk-ignore-all(trunk-toolbox/do-not-land,trunk-toolbox/todo)
 use confique::toml::{self, FormatOptions};
 use confique::Config;
 
