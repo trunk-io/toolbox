@@ -57,7 +57,7 @@ fn run() -> anyhow::Result<()> {
         .iter()
         .map(|d| {
             sarif::ResultBuilder::default()
-                .level("error")
+                .level(d.severity.to_string())
                 .locations([sarif::LocationBuilder::default()
                     .physical_location(
                         sarif::PhysicalLocationBuilder::default()
@@ -105,7 +105,7 @@ fn run() -> anyhow::Result<()> {
                 .unwrap(),
         )
         .rule_id("toolbox-perf")
-        .level("note")
+        .level(diagnostic::Severity::Note.to_string())
         .build()
         .unwrap();
 

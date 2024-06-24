@@ -1,11 +1,23 @@
 use serde::Serialize;
+use std::fmt;
 
 #[derive(Serialize)]
 pub enum Severity {
     Error,
     Warning,
-    Information,
-    Hint,
+    Note,
+    None,
+}
+
+impl fmt::Display for Severity {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Severity::Error => write!(f, "error"),
+            Severity::Warning => write!(f, "warning"),
+            Severity::Note => write!(f, "note"),
+            Severity::None => write!(f, "none"),
+        }
+    }
 }
 
 #[derive(Serialize)]

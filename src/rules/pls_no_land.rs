@@ -128,7 +128,8 @@ fn pls_no_land_impl(path: &PathBuf, config: &Conf) -> anyhow::Result<Vec<diagnos
                             character: m.get(1).unwrap().end() as u64,
                         },
                     },
-                    severity: diagnostic::Severity::Error,
+                    // Lower severity than DNL
+                    severity: diagnostic::Severity::Warning,
                     code: "todo".to_string(),
                     message: format!("Found '{}'", token),
                 });
