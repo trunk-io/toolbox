@@ -22,7 +22,7 @@
 Toolbox is our custom collection of must have tools for any large software project. We've got a backlog of small tools to built into our toolbox here and happy to take contributions as well. `toolbox` is best used through `trunk check` to keep your development on rails (not the ruby kind).
 
 This repo is open to contributions! See our
-[contribution guidelines](https://github.com/trunk-io/toolbox/blob/main/CONTRIBUTING.md)
+[contribution guidelines](CONTRIBUTING.md)
 
 ### Enabling
 
@@ -59,6 +59,32 @@ Anything you intentionally don't want in your repo should really not be there. T
 ```typescript
 // DONOTLAND
 console.log("I don't think this code should execute");
+```
+
+#### TODO
+
+##### What it does
+
+Keeps you from accidentally commiting incomplete code to your repo. This is functionally the same as DONOTLAND, but reports at a lower severity so you can customize your approach to burning them down.
+
+Valid triggers for this rule are: TODO, todo, FIXME, fixme
+
+By default, this rule is disabled and must be enabled with:
+
+```toml
+[todo]
+enabled = true
+```
+
+##### Why if this bad?
+
+TODOs should be treated like any other lint issue. Sometimes you need to land code that still has these issues, but you want to keep track of them and avoid them when possible.
+
+##### Example
+
+```typescript
+// TODO: We should evaluate using the asynchronous API
+uploadResultsSync();
 ```
 
 #### if-change-then-change

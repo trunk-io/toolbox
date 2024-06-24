@@ -1,4 +1,4 @@
-// trunk-ignore-all(trunk-toolbox/do-not-land)
+// trunk-ignore-all(trunk-toolbox/do-not-land,trunk-toolbox/todo)
 use confique::toml::{self, FormatOptions};
 use confique::Config;
 
@@ -9,6 +9,9 @@ pub struct Conf {
 
     #[config(nested)]
     pub donotland: PlsNotLandConf,
+
+    #[config(nested)]
+    pub todo: TodoConf,
 }
 
 impl Conf {
@@ -27,5 +30,11 @@ pub struct IfChangeConf {
 #[derive(Config)]
 pub struct PlsNotLandConf {
     #[config(default = true)]
+    pub enabled: bool,
+}
+
+#[derive(Config)]
+pub struct TodoConf {
+    #[config(default = false)]
     pub enabled: bool,
 }

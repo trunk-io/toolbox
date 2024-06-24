@@ -14,7 +14,7 @@ Trunk toolbox is a place for rules that transcend particular languages and are r
 
 ## Development
 
-The trunk.yaml in this repo has been modified to run your local iteration of toolbox as you are building. This is managed through the `trunk-latest` script. Effectively as you run `cargo build` or `cargo build release` the script will pick up the last built binary and use that.
+The trunk.yaml in this repo has been modified to run your local iteration of toolbox as you are building. This is managed through the `toolbox-latest` script. Effectively as you run `cargo build` or `cargo build release` the script will pick up the last built binary and use that.
 
 If no local binary has been built then the pinned version in the trunk.yaml will be used.
 
