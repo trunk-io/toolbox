@@ -37,7 +37,6 @@ pub struct Cli {
     pub upstream: String,
 
     #[clap(long, default_value = "sarif")]
-    // #[arg(default_value_t = "sarif")]
     pub output_format: OutputFormat,
 
     #[clap(long)]
