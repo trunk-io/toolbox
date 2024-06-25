@@ -42,8 +42,9 @@ fn default_print() -> anyhow::Result<()> {
     );
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton_with("HEAD", "text")?;
-    let expected_text =
-        String::from("alpha.foo:1:0: Found 'do-NOT-lAnD'\nalpha.foo:2:0: Found 'DONOTLAND'\n");
+    let expected_text = String::from(
+        "alpha.foo:1:0: Found 'do-NOT-lAnD' (error)\nalpha.foo:2:0: Found 'DONOTLAND' (error)\n",
+    );
 
     assert_that(&horton.exit_code).contains_value(0);
     assert_that(&horton.stdout).is_equal_to(&expected_text);
