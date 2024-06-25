@@ -17,11 +17,7 @@ fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
         .map(|d| {
             format!(
                 "{}:{}:{}: {} ({})",
-                d.range.path,
-                d.range.start.line,
-                d.range.start.character,
-                d.message,
-                d.severity.to_string()
+                d.range.path, d.range.start.line, d.range.start.character, d.message, d.severity
             )
         })
         .collect::<Vec<String>>()
