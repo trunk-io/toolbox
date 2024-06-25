@@ -15,10 +15,10 @@ fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
         .diagnostics
         .iter()
         .map(|d| {
-            return format!(
+            format!(
                 "{}:{}:{}: {}",
                 d.range.path, d.range.start.line, d.range.start.character, d.message
-            );
+            )
         })
         .collect::<Vec<String>>()
         .join("\n");
@@ -109,7 +109,7 @@ fn generate_sarif_string(
         .build()?;
 
     let sarif = serde_json::to_string_pretty(&sarif_built)?;
-    return Ok(sarif);
+    Ok(sarif)
 }
 
 fn run() -> anyhow::Result<()> {
@@ -153,11 +153,9 @@ fn run() -> anyhow::Result<()> {
         Err(e) => return Err(e),
     }
 
-    let output_string;
+    let mut output_string = generate_line_string(&ret);
     if cli.output_format == OutputFormat::Sarif {
         output_string = generate_sarif_string(&ret, &run, &start)?;
-    } else {
-        output_string = generate_line_string(&ret);
     }
 
     if let Some(outfile) = &cli.results {

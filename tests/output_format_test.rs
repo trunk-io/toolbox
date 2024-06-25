@@ -2,7 +2,6 @@
 extern crate regex;
 
 use spectral::prelude::*;
-use std::env;
 use std::fs;
 use std::path::Path;
 
@@ -14,7 +13,7 @@ use integration_testing::TestRepo;
 fn default_sarif() -> anyhow::Result<()> {
     let test_repo = TestRepo::make()?;
 
-    let mut expected_file = Path::new(file!()).parent().unwrap().join("output.sarif");
+    let expected_file = Path::new(file!()).parent().unwrap().join("output.sarif");
     let expected_sarif = fs::read_to_string(expected_file)?;
 
     test_repo.write(
