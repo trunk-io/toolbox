@@ -24,7 +24,7 @@ fn basic_todo() -> anyhow::Result<()> {
         "alpha.foo",
         "lorem ipsum dolor\ntoDO\nsit amet\n".as_bytes(),
     );
-    write_enable_config(&test_repo);
+    write_enable_config(&test_repo)?;
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
 
@@ -42,7 +42,7 @@ fn basic_fixme() -> anyhow::Result<()> {
         "alpha.foo",
         "lorem ipsum dolor\nFIXME: fix this\nsit amet\n".as_bytes(),
     );
-    write_enable_config(&test_repo);
+    write_enable_config(&test_repo)?;
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
 
@@ -60,7 +60,7 @@ fn basic_mastodon() -> anyhow::Result<()> {
         "alpha.foo",
         "lorem ipsum dolor\n// Mastodons are cool\nsit amet\n".as_bytes(),
     );
-    write_enable_config(&test_repo);
+    write_enable_config(&test_repo)?;
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
 

@@ -115,10 +115,14 @@ impl TestRepo {
     }
 
     pub fn run_horton(&self) -> anyhow::Result<HortonOutput> {
-        self.run_horton_against("HEAD")
+        self.run_horton_with("HEAD", "sarif")
     }
 
-    pub fn run_horton_against(&self, upstream_ref: &str) -> anyhow::Result<HortonOutput> {
+    pub fn run_horton_with(
+        &self,
+        upstream_ref: &str,
+        format: &str,
+    ) -> anyhow::Result<HortonOutput> {
         let mut cmd = Command::cargo_bin("trunk-toolbox")?;
 
         let modified_paths =
@@ -132,6 +136,7 @@ impl TestRepo {
         cmd.arg("--upstream")
             .arg(upstream_ref)
             .current_dir(self.dir.path());
+        cmd.arg("--output-format").arg(format);
         for path in strings.unwrap() {
             cmd.arg(path);
         }
