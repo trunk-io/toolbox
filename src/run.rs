@@ -2,7 +2,27 @@ use crate::config::Conf;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::builder::PossibleValue;
+use clap::{Parser, Subcommand, ValueEnum};
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum OutputFormat {
+    Sarif,
+    Text,
+}
+
+impl ValueEnum for OutputFormat {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Self::Sarif, Self::Text]
+    }
+
+    fn to_possible_value(&self) -> Option<PossibleValue> {
+        Some(match self {
+            Self::Sarif => PossibleValue::new("sarif"),
+            Self::Text => PossibleValue::new("text"),
+        })
+    }
+}
 
 #[derive(Parser, Debug)]
 #[clap(version = env!("CARGO_PKG_VERSION"), author = "Trunk Technologies Inc.")]
@@ -15,6 +35,9 @@ pub struct Cli {
     #[clap(long)]
     #[arg(default_value_t = String::from("HEAD"))]
     pub upstream: String,
+
+    #[clap(long, default_value = "sarif")]
+    pub output_format: OutputFormat,
 
     #[clap(long)]
     /// optional path to write results to

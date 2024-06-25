@@ -1,0 +1,65 @@
+{
+  "runs": [
+    {
+      "results": [
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "alpha.foo"
+                },
+                "region": {
+                  "endColumn": 12,
+                  "endLine": 2,
+                  "startColumn": 1,
+                  "startLine": 2
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Found 'do-NOT-lAnD'"
+          },
+          "ruleId": "do-not-land"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "alpha.foo"
+                },
+                "region": {
+                  "endColumn": 10,
+                  "endLine": 3,
+                  "startColumn": 1,
+                  "startLine": 3
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Found 'DONOTLAND'"
+          },
+          "ruleId": "do-not-land"
+        },
+        {
+          "level": "note",
+          "message": {
+            "text": "1 files processed in ms"
+          },
+          "ruleId": "toolbox-perf"
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "trunk-toolbox"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}
