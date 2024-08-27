@@ -8,3 +8,7 @@ enabled = true
 
 [todo]
 enabled = true
+
+[neveredit]
+enabled = true
+paths = ["write-once.txt"]

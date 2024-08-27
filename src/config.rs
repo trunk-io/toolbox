@@ -12,6 +12,9 @@ pub struct Conf {
 
     #[config(nested)]
     pub todo: TodoConf,
+
+    #[config(nested)]
+    pub neveredit: NeverEditConf,
 }
 
 impl Conf {
@@ -37,4 +40,11 @@ pub struct PlsNotLandConf {
 pub struct TodoConf {
     #[config(default = false)]
     pub enabled: bool,
+}
+
+#[derive(Config)]
+pub struct NeverEditConf {
+    #[config(default = false)]
+    pub enabled: bool,
+    pub paths: Vec<String>,
 }
