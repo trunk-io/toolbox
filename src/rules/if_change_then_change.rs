@@ -137,7 +137,7 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
     let modified = git::modified_since(upstream, None)?;
     let hunks = &modified.hunks;
 
-    log::debug!("Modified stats, per libgit2:\n{:#?}", modified);
+    log::trace!("modified stats, per libgit2:\n{:#?}", modified);
 
     // TODO(sam): this _should_ be a iter-map-collect, but unclear how to apply a reducer
     // between the map and collect (there can be multiple hunks with the same path)

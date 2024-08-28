@@ -10,9 +10,8 @@ use crate::git;
 
 pub fn is_never_edit(file_path: &str, config: &NeverEditConf) -> bool {
     for glob_path in &config.paths {
-        println!("CHecked {}", file_path);
         if glob_match(glob_path, file_path) {
-            println!("Matched: {} with {}", glob_path, file_path);
+            log::info!("matched: {} with {}", glob_path, file_path);
             return true;
         }
     }
@@ -72,7 +71,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                         severity: diagnostic::Severity::Error,
                         code: "never-edit-modified".to_string(),
                         message: format!(
-                            "{:?} is a protected file and should not be modified",
+                            "{} is a protected file and should not be modified",
                             protected_file
                         ),
                     });
@@ -93,8 +92,6 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
             }
         }
     }
-
-    log::error!("Modified stats, per libgit2:\n{:#?}", modified.paths);
 
     diagnostics.push(diagnostic::Diagnostic {
         path: "".to_string(),

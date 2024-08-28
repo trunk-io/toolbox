@@ -87,6 +87,11 @@ impl TestRepo {
             path
         };
 
+        // Create the directory hierarchy if needed
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).expect(format!("Unable to create directories for {:#?}", parent).as_str());
+        }
+
         fs::write(&path, data).expect(format!("Unable to write {:#?}", path).as_str());
     }
 
@@ -118,6 +123,14 @@ impl TestRepo {
         self.run_horton_with("HEAD", "sarif")
     }
 
+    pub fn set_toolbox_toml(&self, config: &str) {
+        fs::write(
+            self.dir.path().join("toolbox.toml"),
+            config.as_bytes(),
+        )
+        .expect("Failed to write toolbox.toml");
+    }
+
     pub fn run_horton_with(
         &self,
         upstream_ref: &str,
@@ -127,9 +140,9 @@ impl TestRepo {
 
         let modified_paths =
             horton::git::modified_since(upstream_ref, Some(self.dir.path()))?.paths;
-        let strings: Result<Vec<String>, _> = modified_paths
-            .into_iter()
-            .map(|file| file.path.into_os_string().into_string())
+        let files: Vec<String> = modified_paths
+            .keys()
+            .map(|key| key.to_string())
             .collect();
 
         cmd.env("RUST_LOG", "debug");
@@ -137,7 +150,7 @@ impl TestRepo {
             .arg(upstream_ref)
             .current_dir(self.dir.path());
         cmd.arg("--output-format").arg(format);
-        for path in strings.unwrap() {
+        for path in files {
             cmd.arg(path);
         }
 
