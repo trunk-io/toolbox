@@ -46,5 +46,6 @@ pub struct TodoConf {
 pub struct NeverEditConf {
     #[config(default = false)]
     pub enabled: bool,
+    #[config(default = [])]
     pub paths: Vec<String>,
 }

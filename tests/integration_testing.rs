@@ -129,7 +129,7 @@ impl TestRepo {
             horton::git::modified_since(upstream_ref, Some(self.dir.path()))?.paths;
         let strings: Result<Vec<String>, _> = modified_paths
             .into_iter()
-            .map(|path| path.into_os_string().into_string())
+            .map(|file| file.path.into_os_string().into_string())
             .collect();
 
         cmd.env("RUST_LOG", "debug");

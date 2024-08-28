@@ -32,7 +32,6 @@ pub struct IctcBlock {
 impl IctcBlock {
     fn get_range(&self) -> diagnostic::Range {
         diagnostic::Range {
-            path: self.path.to_str().unwrap().to_string(),
             start: diagnostic::Position {
                 line: self.begin.unwrap(),
                 character: 0,
@@ -190,7 +189,8 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
                     // Check if the repo file exists - if it was deleted this is a warning
                     if !Path::new(local_file).exists() {
                         diagnostics.push(diagnostic::Diagnostic {
-                            range: block.get_range(),
+                            path: block.path.to_str().unwrap().to_string(),
+                            range: Some(block.get_range()),
                             severity: diagnostic::Severity::Warning,
                             code: "if-change-file-does-not-exist".to_string(),
                             message: format!("ThenChange {} does not exist", local_file.display(),),
@@ -199,7 +199,8 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
                     // If target file was not changed raise issue
                     if blocks_by_path.get(&local_file).is_none() {
                         diagnostics.push(diagnostic::Diagnostic {
-                            range: block.get_range(),
+                            path: block.path.to_str().unwrap().to_string(),
+                            range: Some(block.get_range()),
                             severity: diagnostic::Severity::Error,
                             code: "if-change-then-change-this".to_string(),
                             message: format!(
@@ -212,7 +213,8 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
                 }
                 ThenChange::MissingIf => {
                     diagnostics.push(diagnostic::Diagnostic {
-                        range: block.get_range(),
+                        path: block.path.to_str().unwrap().to_string(),
+                        range: Some(block.get_range()),
                         severity: diagnostic::Severity::Warning,
                         code: "if-change-mismatched".to_string(),
                         message: "Expected preceding IfChange tag".to_string(),
@@ -220,7 +222,8 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
                 }
                 ThenChange::MissingThen => {
                     diagnostics.push(diagnostic::Diagnostic {
-                        range: block.get_range(),
+                        path: block.path.to_str().unwrap().to_string(),
+                        range: Some(block.get_range()),
                         severity: diagnostic::Severity::Warning,
                         code: "if-change-mismatched".to_string(),
                         message: "Expected matching ThenChange tag".to_string(),

@@ -3,6 +3,7 @@ use confique::Config;
 use horton::config::Conf;
 use horton::diagnostic;
 use horton::rules::if_change_then_change::ictc;
+use horton::rules::never_edit::never_edit;
 use horton::rules::pls_no_land::pls_no_land;
 use horton::run::{Cli, OutputFormat, Run, Subcommands};
 
@@ -15,10 +16,14 @@ fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
         .diagnostics
         .iter()
         .map(|d| {
-            format!(
-                "{}:{}:{}: {} ({})",
-                d.range.path, d.range.start.line, d.range.start.character, d.message, d.severity
-            )
+            if let Some(range) = &d.range {
+                format!(
+                    "{}:{}:{}: {} ({})",
+                    d.path, range.start.line, range.start.character, d.message, d.severity
+                )
+            } else {
+                format!("{}: {} ({})", d.path, d.message, d.severity)
+            }
         })
         .collect::<Vec<String>>()
         .join("\n");
@@ -34,31 +39,32 @@ fn generate_sarif_string(
         .diagnostics
         .iter()
         .map(|d| {
+            let mut location_builder = sarif::LocationBuilder::default();
+            if let Some(range) = &d.range {
+                location_builder.physical_location(
+                    sarif::PhysicalLocationBuilder::default()
+                        .artifact_location(
+                            sarif::ArtifactLocationBuilder::default()
+                                .uri(d.path.clone())
+                                .build()
+                                .unwrap(),
+                        )
+                        .region(
+                            sarif::RegionBuilder::default()
+                                .start_line(range.start.line as i64 + 1)
+                                .start_column(range.start.character as i64 + 1)
+                                .end_line(range.end.line as i64 + 1)
+                                .end_column(range.end.character as i64 + 1)
+                                .build()
+                                .unwrap(),
+                        )
+                        .build()
+                        .unwrap(),
+                );
+            }
             sarif::ResultBuilder::default()
                 .level(d.severity.to_string())
-                .locations([sarif::LocationBuilder::default()
-                    .physical_location(
-                        sarif::PhysicalLocationBuilder::default()
-                            .artifact_location(
-                                sarif::ArtifactLocationBuilder::default()
-                                    .uri(d.range.path.clone())
-                                    .build()
-                                    .unwrap(),
-                            )
-                            .region(
-                                sarif::RegionBuilder::default()
-                                    .start_line(d.range.start.line as i64 + 1)
-                                    .start_column(d.range.start.character as i64 + 1)
-                                    .end_line(d.range.end.line as i64 + 1)
-                                    .end_column(d.range.end.character as i64 + 1)
-                                    .build()
-                                    .unwrap(),
-                            )
-                            .build()
-                            .unwrap(),
-                    )
-                    .build()
-                    .unwrap()])
+                .locations([location_builder.build().unwrap()])
                 .message(
                     sarif::MessageBuilder::default()
                         .text(d.message.clone())
@@ -68,6 +74,34 @@ fn generate_sarif_string(
                 .rule_id(d.code.clone())
                 .build()
                 .unwrap()
+            // sarif::ResultBuilder::default()
+            //     .level(d.severity.to_string())
+            //     .locations([sarif::LocationBuilder::default()
+            //         .physical_location(
+            //             sarif::PhysicalLocationBuilder::default()
+            //                 .artifact_location(
+            //                     sarif::ArtifactLocationBuilder::default()
+            //                         .uri(d.range.path.clone())
+            //                         .build()
+            //                         .unwrap(),
+            //                 )
+            //                 .region(
+            //                     sarif::RegionBuilder::default()
+            //                         .start_line(d.range.start.line as i64 + 1)
+            //                         .start_column(d.range.start.character as i64 + 1)
+            //                         .end_line(d.range.end.line as i64 + 1)
+            //                         .end_column(d.range.end.character as i64 + 1)
+            //                         .build()
+            //                         .unwrap(),
+            //                 )
+            //                 .build()
+            //                 .unwrap(),
+            //         )
+            //         .build()
+            //         .unwrap()])
+
+            // .build()
+            // .unwrap()
         })
         .collect();
 
@@ -77,7 +111,7 @@ fn generate_sarif_string(
                 .text(format!(
                     "{:?} files processed in {:?}",
                     run_context.paths.len(),
-                    start_time.elapsed()
+                    start_time.elapsed(),
                 ))
                 .build()
                 .unwrap(),
@@ -149,6 +183,12 @@ fn run() -> anyhow::Result<()> {
     }
 
     match ictc_result {
+        Ok(result) => ret.diagnostics.extend(result),
+        Err(e) => return Err(e),
+    }
+
+    let nc_result = never_edit(&run, &cli.upstream);
+    match nc_result {
         Ok(result) => ret.diagnostics.extend(result),
         Err(e) => return Err(e),
     }

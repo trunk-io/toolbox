@@ -93,8 +93,8 @@ fn pls_no_land_impl(path: &PathBuf, config: &Conf) -> anyhow::Result<Vec<diagnos
         {
             if let Some(m) = DNL_RE.find(line) {
                 ret.push(diagnostic::Diagnostic {
-                    range: diagnostic::Range {
-                        path: path.to_str().unwrap().to_string(),
+                    path: path.to_str().unwrap().to_string(),
+                    range: Some(diagnostic::Range {
                         start: diagnostic::Position {
                             line: i as u64,
                             character: m.start() as u64,
@@ -103,7 +103,7 @@ fn pls_no_land_impl(path: &PathBuf, config: &Conf) -> anyhow::Result<Vec<diagnos
                             line: i as u64,
                             character: m.end() as u64,
                         },
-                    },
+                    }),
                     severity: diagnostic::Severity::Error,
                     code: "do-not-land".to_string(),
                     message: format!("Found '{}'", m.as_str()),
@@ -116,8 +116,8 @@ fn pls_no_land_impl(path: &PathBuf, config: &Conf) -> anyhow::Result<Vec<diagnos
             if let Some(m) = TODO_RE.captures(line) {
                 let token = &m[1];
                 ret.push(diagnostic::Diagnostic {
-                    range: diagnostic::Range {
-                        path: path.to_str().unwrap().to_string(),
+                    path: path.to_str().unwrap().to_string(),
+                    range: Some(diagnostic::Range {
                         start: diagnostic::Position {
                             line: i as u64,
                             character: m.get(1).unwrap().start() as u64,
@@ -127,7 +127,7 @@ fn pls_no_land_impl(path: &PathBuf, config: &Conf) -> anyhow::Result<Vec<diagnos
                             // Remove one since we also check for a nonalpha character after the token.
                             character: m.get(1).unwrap().end() as u64,
                         },
-                    },
+                    }),
                     // Lower severity than DNL
                     severity: diagnostic::Severity::Warning,
                     code: "todo".to_string(),
