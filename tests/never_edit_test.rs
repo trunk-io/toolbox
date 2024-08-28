@@ -24,7 +24,7 @@ fn assert_modified_locked_file() -> anyhow::Result<()> {
     test_repo.write("src/write_many.txt", "edit the text".as_bytes());
 
     test_repo.set_toolbox_toml(toml);
-    
+
     let horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);

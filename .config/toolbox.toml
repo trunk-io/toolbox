@@ -11,4 +11,4 @@ enabled = true
 
 [neveredit]
 enabled = true
-paths = [""] # paths to protect from modification
+paths = [""]   # paths to protect from modification

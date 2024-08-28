@@ -41,32 +41,29 @@ fn generate_sarif_string(
         .map(|d| {
             let mut physical_location = sarif::PhysicalLocationBuilder::default();
             physical_location.artifact_location(
-                        sarif::ArtifactLocationBuilder::default()
-                            .uri(d.path.clone())
-                            .build()
-                            .unwrap(),
-                    );
+                sarif::ArtifactLocationBuilder::default()
+                    .uri(d.path.clone())
+                    .build()
+                    .unwrap(),
+            );
 
             if let Some(range) = &d.range {
-                physical_location
-                        .region(
-                            sarif::RegionBuilder::default()
-                                .start_line(range.start.line as i64 + 1)
-                                .start_column(range.start.character as i64 + 1)
-                                .end_line(range.end.line as i64 + 1)
-                                .end_column(range.end.character as i64 + 1)
-                                .build()
-                                .unwrap(),
-                        );
+                physical_location.region(
+                    sarif::RegionBuilder::default()
+                        .start_line(range.start.line as i64 + 1)
+                        .start_column(range.start.character as i64 + 1)
+                        .end_line(range.end.line as i64 + 1)
+                        .end_column(range.end.character as i64 + 1)
+                        .build()
+                        .unwrap(),
+                );
             }
             sarif::ResultBuilder::default()
                 .level(d.severity.to_string())
-                .locations([
-                    sarif::LocationBuilder::default()
-                        .physical_location(physical_location.build().unwrap())
-                        .build()
-                        .unwrap()
-                    ])
+                .locations([sarif::LocationBuilder::default()
+                    .physical_location(physical_location.build().unwrap())
+                    .build()
+                    .unwrap()])
                 .message(
                     sarif::MessageBuilder::default()
                         .text(d.message.clone())

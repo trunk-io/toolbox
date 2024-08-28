@@ -151,7 +151,6 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     )?;
 
     if let Some(current_hunk) = &maybe_current_hunk {
-        // ret.paths.insert(current_hunk.path.clone());
         ret.hunks.push(current_hunk.clone());
     }
 

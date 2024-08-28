@@ -123,7 +123,7 @@ Allows you to enforce code does not get modified once checked into the repo.
 ##### Why if this bad?
 
 If code is immutable - like database migration scripts - you want to ensure that no one edits those files
-once they are checked in. This rule allows you to create restricted lists of files that cannot be edited 
+once they are checked in. This rule allows you to create restricted lists of files that cannot be edited
 once added to the repo.
 
 ##### Example
@@ -133,7 +133,6 @@ This rule will report a violation if src/write_once.txt is modified or deleted i
 [neveredit]
 enabled = true
 paths = ["**/write_once*"]
-
 
 ### Disclaimer
 
