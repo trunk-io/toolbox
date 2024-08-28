@@ -70,7 +70,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                         range: None,
                         severity: diagnostic::Severity::Error,
                         code: "never-edit-modified".to_string(),
-                        message: format!("file is protected and should not be modified",),
+                        message: "file is protected and should not be modified".to_string(),
                     });
                 }
                 FileStatus::Deleted => {
@@ -79,10 +79,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                         range: None,
                         severity: diagnostic::Severity::Warning,
                         code: "never-edit-deleted".to_string(),
-                        message: format!(
-                            "{:?} is a protected file and should not be deleted",
-                            protected_file
-                        ),
+                        message: "file is protected and should not be deleted".to_string(),
                     });
                 }
                 _ => {}

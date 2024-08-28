@@ -96,6 +96,16 @@ impl TestRepo {
         fs::write(&path, data).expect(format!("Unable to write {:#?}", path).as_str());
     }
 
+    #[allow(dead_code)]
+    pub fn delete(&self, relpath: &str) {
+        let path = {
+            let mut path = self.dir.path().to_path_buf();
+            path.push(relpath);
+            path
+        };
+        fs::remove_file(&path).expect(format!("Unable to delete {:#?}", path).as_str());
+    }
+
     pub fn git_add_all(&self) -> anyhow::Result<()> {
         Command::new("git")
             .arg("add")
@@ -106,6 +116,7 @@ impl TestRepo {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn git_commit_all(&self, message: &str) {
         self.git_add_all().expect("add worked");
 
@@ -124,9 +135,9 @@ impl TestRepo {
         self.run_horton_with("HEAD", "sarif")
     }
 
+    #[allow(dead_code)]
     pub fn set_toolbox_toml(&self, config: &str) {
-        fs::write(self.dir.path().join("toolbox.toml"), config.as_bytes())
-            .expect("Failed to write toolbox.toml");
+        self.write(".config/toolbox.toml", config.as_bytes());
     }
 
     pub fn run_horton_with(
