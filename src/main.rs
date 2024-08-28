@@ -76,34 +76,6 @@ fn generate_sarif_string(
                 .rule_id(d.code.clone())
                 .build()
                 .unwrap()
-            // sarif::ResultBuilder::default()
-            //     .level(d.severity.to_string())
-            //     .locations([sarif::LocationBuilder::default()
-            //         .physical_location(
-            //             sarif::PhysicalLocationBuilder::default()
-            //                 .artifact_location(
-            //                     sarif::ArtifactLocationBuilder::default()
-            //                         .uri(d.range.path.clone())
-            //                         .build()
-            //                         .unwrap(),
-            //                 )
-            //                 .region(
-            //                     sarif::RegionBuilder::default()
-            //                         .start_line(d.range.start.line as i64 + 1)
-            //                         .start_column(d.range.start.character as i64 + 1)
-            //                         .end_line(d.range.end.line as i64 + 1)
-            //                         .end_column(d.range.end.character as i64 + 1)
-            //                         .build()
-            //                         .unwrap(),
-            //                 )
-            //                 .build()
-            //                 .unwrap(),
-            //         )
-            //         .build()
-            //         .unwrap()])
-
-            // .build()
-            // .unwrap()
         })
         .collect();
 
@@ -189,8 +161,10 @@ fn run() -> anyhow::Result<()> {
         Err(e) => return Err(e),
     }
 
-    let nc_result = never_edit(&run, &cli.upstream);
-    match nc_result {
+    //TODO: refactor this to use a threadpool for all the rules. using rayon::join() won't scale
+    //beyond two things
+    let ne_result = never_edit(&run, &cli.upstream);
+    match ne_result {
         Ok(result) => ret.diagnostics.extend(result),
         Err(e) => return Err(e),
     }

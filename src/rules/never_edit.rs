@@ -71,8 +71,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                         severity: diagnostic::Severity::Error,
                         code: "never-edit-modified".to_string(),
                         message: format!(
-                            "{} is a protected file and should not be modified",
-                            protected_file
+                            "file is protected and should not be modified",
                         ),
                     });
                 }
