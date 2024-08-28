@@ -32,8 +32,6 @@ lint:
           batch: true
           success_codes: [0]
           read_output_from: tmp_file
-          disable_upstream: true
-      hold_the_line: false          
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version
