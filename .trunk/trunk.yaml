@@ -45,22 +45,22 @@ lint:
         - tests/**
 
   enabled:
-    # - shellcheck@0.10.0
-    # - shfmt@3.6.0
+    - shellcheck@0.10.0
+    - shfmt@3.6.0
     - trunk-toolbox@0.3.2
-    # - checkov@3.2.238
-    # - trivy@0.54.1
-    # - trufflehog@3.81.9
-    # - oxipng@9.1.2
-    # - yamllint@1.35.1
-    # - git-diff-check
-    # - taplo@0.9.3
-    # - actionlint@1.7.1
-    # - clippy@1.76.0
-    # - gitleaks@8.18.4
-    # - markdownlint@0.41.0
-    # - prettier@3.3.3
-    # - rustfmt@1.76.0
+    - checkov@3.2.238
+    - trivy@0.54.1
+    - trufflehog@3.81.9
+    - oxipng@9.1.2
+    - yamllint@1.35.1
+    - git-diff-check
+    - taplo@0.9.3
+    - actionlint@1.7.1
+    - clippy@1.76.0
+    - gitleaks@8.18.4
+    - markdownlint@0.41.0
+    - prettier@3.3.3
+    - rustfmt@1.76.0
 actions:
   enabled:
     - trunk-upgrade-available
