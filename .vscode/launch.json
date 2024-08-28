@@ -15,24 +15,8 @@
           "kind": "bin"
         }
       },
-      "args": ["tests/alpha.foo"],
+      "args": ["tests/if_change_then_change/basic_ictc.file"],
       "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "lldb",
-      "request": "launch",
-      "name": "Debug cargo test toolbox",
-      "cargo": {
-        "args": ["test", "--no-run"],
-        "filter": {
-          "name": "trunk-toolbox",
-          "kind": "lib"
-        }
-      },
-      "program": "${workspaceFolder}/target/debug/deps/output_format_test-1abc0c11be16e961",
-      "cwd": "${workspaceFolder}",
-      "stopOnEntry": false,
-      "sourceLanguages": ["rust"]
     }
   ]
 }
