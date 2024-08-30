@@ -8,7 +8,7 @@ use horton::rules::pls_no_land::pls_no_land;
 use horton::run::{Cli, OutputFormat, Run, Subcommands};
 
 use serde_sarif::sarif;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
@@ -117,6 +117,18 @@ fn generate_sarif_string(
     Ok(sarif)
 }
 
+fn find_toolbox_toml() -> Option<String> {
+    let files = ["toolbox.toml", ".config/toolbox.toml"];
+
+    for file in &files {
+        if Path::new(file).exists() {
+            return Some(file.to_string());
+        }
+    }
+
+    None
+}
+
 fn run() -> anyhow::Result<()> {
     let start = Instant::now();
     let cli: Cli = Cli::parse();
@@ -128,12 +140,16 @@ fn run() -> anyhow::Result<()> {
 
     let mut ret = diagnostic::Diagnostics::default();
 
+    // If not configuration file is provided the default config will be used
+    // some parts of toolbo can run with the default config
+    let toolbox_toml: String = match find_toolbox_toml() {
+        Some(file) => file,
+        None => "no_config_found.toml".to_string(),
+    };
+
     let config = Conf::builder()
         .env()
-        .file("toolbox.toml")
-        .file(".config/toolbox.toml")
-        .file(".trunk/config/toolbox.toml")
-        .file(".trunk/configs/toolbox.toml")
+        .file(&toolbox_toml)
         .load()
         .unwrap_or_else(|err| {
             eprintln!("Toolbox cannot run: {}", err);
@@ -143,6 +159,8 @@ fn run() -> anyhow::Result<()> {
     let run = Run {
         paths: cli.files.into_iter().map(PathBuf::from).collect(),
         config,
+        config_path: toolbox_toml,
+        is_upstream: cli.cache_dir.ends_with("-upstream"),
     };
 
     let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
