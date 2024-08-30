@@ -130,9 +130,11 @@ once added to the repo.
 
 This rule will report a violation if src/write_once.txt is modified or deleted in git given this config in toolbox.toml
 
+```toml
 [neveredit]
 enabled = true
 paths = ["**/write_once*"]
+```
 
 ### Disclaimer
 
