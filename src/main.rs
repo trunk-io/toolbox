@@ -140,14 +140,12 @@ fn run() -> anyhow::Result<()> {
 
     let mut ret = diagnostic::Diagnostics::default();
 
+    // If not configuration file is provided the default config will be used
+    // some parts of toolbo can run with the default config
     let toolbox_toml: String = match find_toolbox_toml() {
         Some(file) => file,
-        None => {
-            eprintln!("Toolbox cannot run: toolbox.toml is required");
-            std::process::exit(1);
-        }
+        None => "no_config_found.toml".to_string(),
     };
-    println!("{}", toolbox_toml);
 
     let config = Conf::builder()
         .env()
