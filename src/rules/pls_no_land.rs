@@ -1,7 +1,6 @@
 // trunk-ignore-all(trunk-toolbox/do-not-land,trunk-toolbox/todo)
 extern crate regex;
 
-use crate::config::Conf;
 use crate::diagnostic;
 use crate::run::Run;
 use anyhow::Context;
@@ -45,7 +44,7 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     let results: Result<Vec<_>, _> = run
         .paths
         .par_iter()
-        .map(|path| pls_no_land_impl(path, &run.config))
+        .map(|path| pls_no_land_impl(path, run))
         .collect();
 
     match results {
@@ -54,7 +53,9 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     }
 }
 
-fn pls_no_land_impl(path: &PathBuf, config: &Conf) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+    let config = &run.config;
+
     if is_binary_file(path).unwrap_or(true) {
         log::debug!("Ignoring binary file {}", path.display());
         return Ok(vec![]);
@@ -88,8 +89,11 @@ fn pls_no_land_impl(path: &PathBuf, config: &Conf) -> anyhow::Result<Vec<diagnos
         .chain(lines_view.iter())
         .enumerate()
     {
+        // DO-NOT-LAND should always fire and not use HTL semantics. So only generate
+        // those warnings on the current code and skip the upstream
         if !line.contains("trunk-ignore(|-begin|-end|-all)\\(trunk-toolbox/(do-not-land)\\)")
             && config.donotland.enabled
+            && !run.is_upstream
         {
             if let Some(m) = DNL_RE.find(line) {
                 ret.push(diagnostic::Diagnostic {

@@ -118,12 +118,7 @@ fn generate_sarif_string(
 }
 
 fn find_toolbox_toml() -> Option<String> {
-    let files = [
-        "toolbox.toml",
-        ".config/toolbox.toml",
-        ".trunk/config/toolbox.toml",
-        ".trunk/configs/toolbox.toml",
-    ];
+    let files = ["toolbox.toml", ".config/toolbox.toml"];
 
     for file in &files {
         if Path::new(file).exists() {
