@@ -87,7 +87,23 @@ impl TestRepo {
             path
         };
 
+        // Create the directory hierarchy if needed
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .expect(format!("Unable to create directories for {:#?}", parent).as_str());
+        }
+
         fs::write(&path, data).expect(format!("Unable to write {:#?}", path).as_str());
+    }
+
+    #[allow(dead_code)]
+    pub fn delete(&self, relpath: &str) {
+        let path = {
+            let mut path = self.dir.path().to_path_buf();
+            path.push(relpath);
+            path
+        };
+        fs::remove_file(&path).expect(format!("Unable to delete {:#?}", path).as_str());
     }
 
     pub fn git_add_all(&self) -> anyhow::Result<()> {
@@ -100,6 +116,7 @@ impl TestRepo {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn git_commit_all(&self, message: &str) {
         self.git_add_all().expect("add worked");
 
@@ -118,6 +135,11 @@ impl TestRepo {
         self.run_horton_with("HEAD", "sarif")
     }
 
+    #[allow(dead_code)]
+    pub fn set_toolbox_toml(&self, config: &str) {
+        self.write(".config/toolbox.toml", config.as_bytes());
+    }
+
     pub fn run_horton_with(
         &self,
         upstream_ref: &str,
@@ -127,17 +149,14 @@ impl TestRepo {
 
         let modified_paths =
             horton::git::modified_since(upstream_ref, Some(self.dir.path()))?.paths;
-        let strings: Result<Vec<String>, _> = modified_paths
-            .into_iter()
-            .map(|path| path.into_os_string().into_string())
-            .collect();
+        let files: Vec<String> = modified_paths.keys().map(|key| key.to_string()).collect();
 
         cmd.env("RUST_LOG", "debug");
         cmd.arg("--upstream")
             .arg(upstream_ref)
             .current_dir(self.dir.path());
         cmd.arg("--output-format").arg(format);
-        for path in strings.unwrap() {
+        for path in files {
             cmd.arg(path);
         }
 

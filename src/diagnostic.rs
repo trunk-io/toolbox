@@ -28,14 +28,14 @@ pub struct Position {
 
 #[derive(Serialize)]
 pub struct Range {
-    pub path: String,
     pub start: Position,
     pub end: Position,
 }
 
 #[derive(Serialize)]
 pub struct Diagnostic {
-    pub range: Range,
+    pub path: String,
+    pub range: Option<Range>,
     pub severity: Severity,
     pub code: String,
     pub message: String,

@@ -1,5 +1,5 @@
 use git2::{AttrCheckFlags, AttrValue, Delta, DiffOptions, Repository};
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
@@ -13,13 +13,20 @@ pub struct Hunk {
     pub end: u64,
 }
 
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum FileStatus {
+    Added,
+    Modified,
+    Deleted,
+}
+
 #[derive(Debug, Default)]
-pub struct NewOrModified {
+pub struct FileChanges {
     /// Set of modified line ranges in new/existing files
     pub hunks: Vec<Hunk>,
 
-    /// Set of new/modified files
-    pub paths: HashSet<PathBuf>,
+    /// Map of changed files and FileStatus
+    pub paths: HashMap<String, FileStatus>,
 }
 
 fn is_lfs(repo: &Repository, path: &Path) -> bool {
@@ -34,7 +41,7 @@ fn is_lfs(repo: &Repository, path: &Path) -> bool {
     }
 }
 
-pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Result<NewOrModified> {
+pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Result<FileChanges> {
     let path = repo_path.unwrap_or(Path::new("."));
     let repo = Repository::open(path)?;
 
@@ -72,10 +79,31 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     //
     // See https://docs.rs/git2/latest/git2/struct.Diff.html#method.foreach and the underlying API
     // docs at https://libgit2.org/libgit2/#HEAD/group/diff/git_diff_foreach.
-    let mut ret = NewOrModified::default();
+    let mut ret = FileChanges::default();
     let mut maybe_current_hunk: Option<Hunk> = None;
     diff.foreach(
-        &mut |_, _| true,
+        &mut |delta, _| {
+            if let Some(path) = delta.new_file().path() {
+                if !is_lfs(&repo, path) {
+                    match delta.status() {
+                        Delta::Added => {
+                            ret.paths
+                                .insert(path.to_string_lossy().to_string(), FileStatus::Added);
+                        }
+                        Delta::Modified => {
+                            ret.paths
+                                .insert(path.to_string_lossy().to_string(), FileStatus::Modified);
+                        }
+                        Delta::Deleted => {
+                            ret.paths
+                                .insert(path.to_string_lossy().to_string(), FileStatus::Deleted);
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            true
+        },
         None,
         None,
         Some(&mut |delta, _, line| {
@@ -104,7 +132,6 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
                                             })
                                         });
                                 } else if let Some(current_hunk) = &maybe_current_hunk {
-                                    ret.paths.insert(current_hunk.path.clone());
                                     ret.hunks.push(current_hunk.clone());
                                     maybe_current_hunk = None;
                                 }
@@ -124,7 +151,6 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     )?;
 
     if let Some(current_hunk) = &maybe_current_hunk {
-        ret.paths.insert(current_hunk.path.clone());
         ret.hunks.push(current_hunk.clone());
     }
 
