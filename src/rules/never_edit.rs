@@ -1,6 +1,7 @@
 use crate::config::NeverEditConf;
 use crate::git::FileStatus;
 use crate::run::Run;
+use glob::glob;
 use glob_match::glob_match;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -37,7 +38,41 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         });
         return Ok(diagnostics);
     }
-    //TODO Add warnings for any glob paths that don't resolve to an existing file or path
+
+    for glob_path in &config.paths {
+        let mut matches_something = false;
+        match glob(glob_path) {
+            Ok(paths) => {
+                for entry in paths {
+                    match entry {
+                        Ok(_path) => {
+                            matches_something = true;
+                            break;
+                        }
+                        Err(e) => println!("Error reading path: {:?}", e),
+                    }
+                }
+                if !matches_something {
+                    diagnostics.push(diagnostic::Diagnostic {
+                        path: "toolbox.toml".to_string(),
+                        range: None,
+                        severity: diagnostic::Severity::Warning,
+                        code: "never-edit-bad-config".to_string(),
+                        message: format!("{:?} does not protect any existing files", glob_path),
+                    });
+                }
+            }
+            Err(_e) => {
+                diagnostics.push(diagnostic::Diagnostic {
+                    path: "toolbox.toml".to_string(),
+                    range: None,
+                    severity: diagnostic::Severity::Warning,
+                    code: "never-edit-bad-config".to_string(),
+                    message: format!("{:?} is not a valid glob pattern", glob_path),
+                });
+            }
+        }
+    }
 
     // Build up list of files that are being checked and are protected
     let protected_files: Vec<_> = run
@@ -56,7 +91,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
 
     // Fast exit if we don't have any files changed that are protected
     if protected_files.is_empty() {
-        return Ok(vec![]);
+        return Ok(diagnostics);
     }
 
     let modified = git::modified_since(upstream, None)?;
