@@ -50,7 +50,7 @@ Keeps you from accidentally commiting code to a repository that is experimental,
 
 Valid triggers for this rule are: DONOTLAND, DO-NOT-LAND, DO_NOT_LAND, donotland, do-not-land, do_not_land
 
-##### Why if this bad?
+##### Why is this bad?
 
 Anything you intentionally don't want in your repo should really not be there. This lets you flag the code you are writing to do testing without worrying that you'll forget you dropped it in your files before pushing your Pull Request.
 
@@ -76,7 +76,7 @@ By default, this rule is disabled and must be enabled with:
 enabled = true
 ```
 
-##### Why if this bad?
+##### Why is this bad?
 
 TODOs should be treated like any other lint issue. Sometimes you need to land code that still has these issues, but you want to keep track of them and avoid them when possible.
 
@@ -93,7 +93,7 @@ uploadResultsSync();
 
 Allows you to enforce code synchronization. Often, we have code in one file that is reliant on code in another loosely - say an enum has 4 options and you want to make sure consumers of that enum are kept in sync as new enums are added. This rule will make sure the code is updated in both places when a modification occurs to the code block.
 
-##### Why if this bad?
+##### Why is this bad?
 
 If code has baked-in assumptions that are not enforced through a check - then they can easily get out of sync. This rule allows you to encode that dependency and ensure all related code is updated when a modification occurs.
 
@@ -120,7 +120,7 @@ x += 9; // why not
 
 Allows you to enforce code does not get modified once checked into the repo.
 
-##### Why if this bad?
+##### Why is this bad?
 
 If code is immutable - like database migration scripts - you want to ensure that no one edits those files
 once they are checked in. This rule allows you to create restricted lists of files that cannot be edited
