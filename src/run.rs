@@ -39,6 +39,10 @@ pub struct Cli {
     #[clap(long, default_value = "sarif")]
     pub output_format: OutputFormat,
 
+    #[clap(long, default_value = "")]
+    /// optional cache directory location
+    pub cache_dir: String,
+
     #[clap(long)]
     /// optional path to write results to
     pub results: Option<String>,
@@ -54,4 +58,6 @@ pub enum Subcommands {
 pub struct Run {
     pub paths: HashSet<PathBuf>,
     pub config: Conf,
+    pub is_upstream: bool,
+    pub config_path: String,
 }

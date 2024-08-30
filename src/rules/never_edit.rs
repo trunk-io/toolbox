@@ -28,9 +28,11 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
 
     let mut diagnostics: Vec<diagnostic::Diagnostic> = Vec::new();
 
-    if config.paths.is_empty() {
+    // We only emit config issues for the current run (not the upstream) so we can guarantee
+    // that config issues get reported and not conceiled by HTL
+    if config.paths.is_empty() && !run.is_upstream {
         diagnostics.push(diagnostic::Diagnostic {
-            path: "toolbox.toml".to_string(),
+            path: run.config_path.clone(),
             range: None,
             severity: diagnostic::Severity::Warning,
             code: "never-edit-config".to_string(),
@@ -39,37 +41,40 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         return Ok(diagnostics);
     }
 
-    for glob_path in &config.paths {
-        let mut matches_something = false;
-        match glob(glob_path) {
-            Ok(paths) => {
-                for entry in paths {
-                    match entry {
-                        Ok(_path) => {
-                            matches_something = true;
-                            break;
+    // We only report diagnostic issues for config when not running as upstream
+    if !run.is_upstream {
+        for glob_path in &config.paths {
+            let mut matches_something = false;
+            match glob(glob_path) {
+                Ok(paths) => {
+                    for entry in paths {
+                        match entry {
+                            Ok(_path) => {
+                                matches_something = true;
+                                break;
+                            }
+                            Err(e) => println!("Error reading path: {:?}", e),
                         }
-                        Err(e) => println!("Error reading path: {:?}", e),
+                    }
+                    if !matches_something {
+                        diagnostics.push(diagnostic::Diagnostic {
+                            path: run.config_path.clone(),
+                            range: None,
+                            severity: diagnostic::Severity::Warning,
+                            code: "never-edit-bad-config".to_string(),
+                            message: format!("{:?} does not protect any existing files", glob_path),
+                        });
                     }
                 }
-                if !matches_something {
+                Err(_e) => {
                     diagnostics.push(diagnostic::Diagnostic {
-                        path: "toolbox.toml".to_string(),
+                        path: run.config_path.clone(),
                         range: None,
                         severity: diagnostic::Severity::Warning,
                         code: "never-edit-bad-config".to_string(),
-                        message: format!("{:?} does not protect any existing files", glob_path),
+                        message: format!("{:?} is not a valid glob pattern", glob_path),
                     });
                 }
-            }
-            Err(_e) => {
-                diagnostics.push(diagnostic::Diagnostic {
-                    path: "toolbox.toml".to_string(),
-                    range: None,
-                    severity: diagnostic::Severity::Warning,
-                    code: "never-edit-bad-config".to_string(),
-                    message: format!("{:?} is not a valid glob pattern", glob_path),
-                });
             }
         }
     }
