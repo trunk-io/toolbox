@@ -92,3 +92,23 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn warn_for_config_not_protecting_anything() -> anyhow::Result<()> {
+    let test_repo: TestRepo = TestRepo::make().unwrap();
+
+    // enable and configure never_edit
+    let toml = r#"
+    [neveredit]
+    enabled = true
+    paths = ["bad_path/**"]
+"#;
+    test_repo.set_toolbox_toml(toml);
+
+    let horton: integration_testing::HortonOutput = test_repo.run_horton()?;
+
+    assert_that(&horton.exit_code).contains_value(0);
+    assert_that(&horton.stdout).contains("does not protect any existing files");
+
+    Ok(())
+}
