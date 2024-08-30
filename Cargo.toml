@@ -17,7 +17,7 @@ path = "src/lib.rs"
 anyhow = "1.0.64"
 clap = { version = "4.0.8", features = ["derive"] }
 env_logger = "0.9.1"
-git2 = { version = "0.15", default-features = false }
+git2 = { version = "0.16", default-features = false }
 lazy_static = "1.4.0"
 log = "0.4.17"
 regex = "1.6.0"
