@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::fmt;
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub enum Severity {
     Error,
     Warning,
@@ -20,19 +20,19 @@ impl fmt::Display for Severity {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct Position {
     pub line: u64,
     pub character: u64,
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct Range {
     pub start: Position,
     pub end: Position,
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct Diagnostic {
     pub path: String,
     pub range: Option<Range>,

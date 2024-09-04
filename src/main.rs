@@ -2,7 +2,7 @@ use clap::Parser;
 use confique::Config;
 use horton::config::Conf;
 use horton::diagnostic;
-use horton::rules::if_change_then_change::ictc;
+use horton::rules::if_change_then_change::Ictc;
 use horton::rules::never_edit::never_edit;
 use horton::rules::pls_no_land::pls_no_land;
 use horton::run::{Cli, OutputFormat, Run, Subcommands};
@@ -163,8 +163,10 @@ fn run() -> anyhow::Result<()> {
         is_upstream: cli.cache_dir.ends_with("-upstream"),
     };
 
-    let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
-        rayon::join(|| pls_no_land(&run), || ictc(&run, &cli.upstream));
+    let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) = rayon::join(
+        || pls_no_land(&run),
+        || Ictc::new(&run, &cli.upstream).run(),
+    );
 
     match pls_no_land_result {
         Ok(result) => ret.diagnostics.extend(result),

@@ -5,7 +5,7 @@ use integration_testing::TestRepo;
 use std::path::PathBuf;
 
 use horton::rules::if_change_then_change::find_ictc_blocks;
-use horton::rules::if_change_then_change::ThenChange;
+use horton::rules::if_change_then_change::{IfChange, ThenChange};
 
 fn assert_no_expected_changes(before: &str, after: &str) -> anyhow::Result<()> {
     let test_repo = TestRepo::make().unwrap();
@@ -348,7 +348,7 @@ fn assert_localfile_notfound() {
 }
 
 #[test]
-fn verify_find_ictc_blocks() {
+fn find_local_ictc_blocks() {
     let result = find_ictc_blocks(&PathBuf::from(
         "tests/if_change_then_change/basic_ictc.file",
     ));
@@ -387,6 +387,29 @@ fn verify_find_ictc_blocks() {
         }
         _ => {
             panic!("wrong thenchange type");
+        }
+    };
+}
+
+#[test]
+fn find_repo_ictc_blocks() {
+    let result = find_ictc_blocks(&PathBuf::from(
+        "tests/if_change_then_change/basic_ictc_remote.file",
+    ));
+    assert!(result.is_ok());
+
+    let list = result.unwrap();
+    assert!(list.len() == 1, "should find 1 ictc block");
+
+    let first = &list[0];
+    assert_eq!(first.begin, Some(6));
+    assert_eq!(first.end, Some(10));
+    match &first.ifchange {
+        Some(IfChange::RemoteFile(path)) => {
+            assert_that(path).contains("github.com:eslint/eslint.git LICENSE");
+        }
+        _ => {
+            panic!("wrong ifchange type");
         }
     };
 }
