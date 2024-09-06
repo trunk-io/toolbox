@@ -11,7 +11,7 @@ runtimes:
     - node@18.12.1
     - rust@1.76.0
 cli:
-  version: 1.22.3
+  version: 1.22.5
 api:
   address: api.trunk-staging.io:8443
 
@@ -48,9 +48,9 @@ lint:
   enabled:
     - shellcheck@0.10.0
     - shfmt@3.6.0
-    - trunk-toolbox@0.3.2
-    - checkov@3.2.238
-    - trufflehog@3.81.9
+    - trunk-toolbox@0.4.1
+    - checkov@3.2.245
+    - trufflehog@3.81.10
     - oxipng@9.1.2
     - yamllint@1.35.1
     - git-diff-check
