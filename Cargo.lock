@@ -1239,8 +1239,10 @@ dependencies = [
  "serde",
  "serde-sarif",
  "serde_json",
+ "sha2",
  "spectral",
  "tempfile",
+ "url",
 ]
 
 [[package]]

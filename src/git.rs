@@ -1,6 +1,7 @@
 use git2::{AttrCheckFlags, AttrValue, Delta, DiffOptions, Repository};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 #[derive(Debug, Clone)]
 pub struct Hunk {
@@ -155,4 +156,25 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     }
 
     Ok(ret)
+}
+
+pub fn clone(repo_url: &str, destination: &str) -> Result<(), String> {
+    let output = Command::new("git")
+        .args(&[
+            "clone",
+            "--no-checkout",
+            "--depth=1",
+            "--bare",
+            "--filter=blob:none",
+            repo_url,
+            destination,
+        ])
+        .output()
+        .expect("Failed to execute git command");
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
 }

@@ -1,11 +1,16 @@
+use confique::{Config, Partial};
+use horton::config::confique_partial_if_change_conf::PartialIfChangeConf;
+use horton::config::Conf;
+use horton::run::Run;
 use spectral::prelude::*;
 
 mod integration_testing;
 use integration_testing::TestRepo;
+use std::collections::HashSet;
 use std::path::PathBuf;
 
-use horton::rules::if_change_then_change::find_ictc_blocks;
-use horton::rules::if_change_then_change::ThenChange;
+use horton::rules::if_change_then_change::{find_ictc_blocks, IctcBlock};
+use horton::rules::if_change_then_change::{Ictc, IfChange, RemoteLocation, ThenChange};
 
 fn assert_no_expected_changes(before: &str, after: &str) -> anyhow::Result<()> {
     let test_repo = TestRepo::make().unwrap();
@@ -348,7 +353,7 @@ fn assert_localfile_notfound() {
 }
 
 #[test]
-fn verify_find_ictc_blocks() {
+fn find_local_ictc_blocks() {
     let result = find_ictc_blocks(&PathBuf::from(
         "tests/if_change_then_change/basic_ictc.file",
     ));
@@ -389,4 +394,79 @@ fn verify_find_ictc_blocks() {
             panic!("wrong thenchange type");
         }
     };
+}
+
+#[test]
+fn find_repo_ictc_blocks() {
+    let result = find_ictc_blocks(&PathBuf::from(
+        "tests/if_change_then_change/basic_ictc_remote.file",
+    ));
+    assert!(result.is_ok());
+
+    let list = result.unwrap();
+    assert!(list.len() == 1, "should find 1 ictc block");
+
+    let first = &list[0];
+    assert_eq!(first.begin, Some(6));
+    assert_eq!(first.end, Some(10));
+    match &first.ifchange {
+        Some(IfChange::RemoteFile(remote)) => {
+            assert_that(&remote.repo).contains("github.com:eslint/eslint.git");
+            assert_that(&remote.path).contains("LICENSE");
+        }
+        _ => {
+            panic!("wrong ifchange type");
+        }
+    };
+}
+
+#[test]
+fn clone_cache_remote_repo() {
+    type PartialConf = <Conf as Config>::Partial;
+    let mut config = Conf::from_partial(PartialConf::default_values()).unwrap();
+
+    let run: Run = Run {
+        paths: HashSet::new(),
+        config,
+        is_upstream: false,
+        config_path: "fake/config/path".to_string(),
+    };
+
+    let remote = RemoteLocation {
+        repo: "git@github.com:eslint/eslint.git".to_string(),
+        path: "LICENSE".to_string(),
+        lock_hash: "".to_string(),
+    };
+
+    let block = IctcBlock {
+        path: PathBuf::from("tests/if_change_then_change/basic_ictc_remote.file"),
+        begin: Some(6),
+        end: Some(10),
+        ifchange: Some(IfChange::RemoteFile(remote.clone())),
+        thenchange: Some(ThenChange::RepoFile(PathBuf::from("foo.bar"))),
+    };
+
+    let mut ictc = Ictc::new(&run, "no-upstream");
+    ictc.build_or_get_remote_repo(&remote, &block);
+
+    // let result: Result<Vec<horton::rules::if_change_then_change::IctcBlock>, anyhow::Error> = find_ictc_blocks(&PathBuf::from(
+    //     "tests/if_change_then_change/basic_ictc_remote.file",
+    // ));
+    // assert!(result.is_ok());
+
+    // let list = result.unwrap();
+    // assert!(list.len() == 1, "should find 1 ictc block");
+
+    // let first = &list[0];
+    // assert_eq!(first.begin, Some(6));
+    // assert_eq!(first.end, Some(10));
+    // match &first.ifchange {
+    //     Some(IfChange::RemoteFile(remote)) => {
+    //         assert_that(&remote.repo).contains("github.com:eslint/eslint.git");
+    //         assert_that(&remote.path).contains("LICENSE");
+    //     }
+    //     _ => {
+    //         panic!("wrong ifchange type");
+    //     }
+    // };
 }
