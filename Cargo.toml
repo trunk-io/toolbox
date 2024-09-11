@@ -30,6 +30,7 @@ confique = "0.2.5"
 glob = "0.3.1"
 glob-match = "0.2.1"
 url = "2.5.2"
+sha2 = "0.10.8"
 
 [dev-dependencies]
 assert_cmd = "2.0"

@@ -158,7 +158,7 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     Ok(ret)
 }
 
-fn clone(repo_url: &str, destination: &Path) -> Result<(), String> {
+pub fn clone(repo_url: &str, destination: &str) -> Result<(), String> {
     let output = Command::new("git")
         .args(&[
             "clone",
@@ -167,7 +167,7 @@ fn clone(repo_url: &str, destination: &Path) -> Result<(), String> {
             "--bare",
             "--filter=blob:none",
             repo_url,
-            destination.to_str().unwrap(),
+            destination,
         ])
         .output()
         .expect("Failed to execute git command");

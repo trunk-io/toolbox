@@ -1,7 +1,10 @@
 use crate::run::Run;
 use anyhow::Context;
 use log::debug;
+use sha2::{Digest, Sha256};
+
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
@@ -13,7 +16,7 @@ use regex::Regex;
 use crate::diagnostic;
 use crate::git;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RemoteLocation {
     pub repo: String,
     pub path: String,
@@ -40,6 +43,15 @@ impl RemoteLocation {
             path,
             lock_hash,
         }
+    }
+
+    pub fn repo_hash(&self) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(self.repo.to_string());
+        let result = hasher.finalize();
+        let hash_string = format!("{:x}", result);
+        let hash_string = &hash_string[..32]; // Get the first 32 characters
+        return hash_string.to_string();
     }
 }
 
@@ -188,11 +200,25 @@ impl<'a> Ictc<'a> {
         Ok(self.diagnostics.clone())
     }
 
-    fn build_or_get_remote_repo(
+    pub fn build_or_get_remote_repo(
         &mut self,
         remote: &RemoteLocation,
         block: &IctcBlock,
     ) -> Result<PathBuf, diagnostic::Diagnostic> {
+        let current_dir = env::current_dir().expect("Failed to get current directory");
+        let repo_dir = current_dir.join(remote.repo_hash());
+
+        git::clone(remote.repo.as_str(), repo_dir.to_str().unwrap())
+            .map_err(|e| {
+                block_diagnostic(
+                    block,
+                    diagnostic::Severity::Warning,
+                    "if-change-clone-failed",
+                    format!("Failed to clone remote repo at {}: {}", remote.repo, e).as_str(),
+                )
+            })
+            .unwrap_or_default();
+
         Err(block_diagnostic(
             block,
             diagnostic::Severity::Warning,
