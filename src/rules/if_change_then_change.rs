@@ -64,7 +64,7 @@ impl RemoteLocation {
 
     pub fn repo_hash(&self) -> String {
         let mut hasher = Sha256::new();
-        hasher.update(repo.to_string());
+        hasher.update(self.repo.to_string());
         let result = hasher.finalize();
         let hash_string = format!("{:x}", result);
         let hash_string = &hash_string[..32]; // Get the first 32 characters
