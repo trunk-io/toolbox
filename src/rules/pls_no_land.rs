@@ -93,7 +93,7 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
         // those warnings on the current code and skip the upstream
         if !line.contains("trunk-ignore(|-begin|-end|-all)\\(trunk-toolbox/(do-not-land)\\)")
             && config.donotland.enabled
-            && !run.is_upstream
+            && !run.is_upstream()
         {
             if let Some(m) = DNL_RE.find(line) {
                 ret.push(diagnostic::Diagnostic {

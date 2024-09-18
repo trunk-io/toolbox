@@ -55,20 +55,33 @@ impl RemoteLocation {
         None
     }
 
-    pub fn repo_dir(&self) -> String {
-        if let Some(repo_name) = Self::extract_repo_name(&self.repo) {
-            return format!("{}-{}", repo_name, &self.repo_hash());
-        }
-        self.repo_hash()
-    }
-
-    pub fn repo_hash(&self) -> String {
+    fn repo_hash(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(self.repo.to_string());
         let result = hasher.finalize();
         let hash_string = format!("{:x}", result);
         let hash_string = &hash_string[..32]; // Get the first 32 characters
         return hash_string.to_string();
+    }
+
+    pub fn repo_dir_name(&self) -> String {
+        if let Some(repo_name) = Self::extract_repo_name(&self.repo) {
+            return format!("{}-{}", repo_name, &self.repo_hash());
+        }
+        self.repo_hash()
+    }
+
+    pub fn local_dir(&self, run: &Run) -> PathBuf {
+        let mut cache_dir = PathBuf::from(run.cache_dir.clone());
+
+        if !cache_dir.exists() {
+            // put the cache in the temp directory
+            cache_dir = env::temp_dir();
+            if !cache_dir.exists() {
+                cache_dir = env::current_dir().expect("Failed to get current directory");
+            }
+        }
+        cache_dir.join(self.repo_dir_name())
     }
 }
 
@@ -222,23 +235,20 @@ impl<'a> Ictc<'a> {
         remote: &RemoteLocation,
         block: &IctcBlock,
     ) -> Result<PathBuf, diagnostic::Diagnostic> {
-        let current_dir: PathBuf = env::current_dir().expect("Failed to get current directory");
-        let repo_path = current_dir.join(remote.repo_hash());
-
-        let repo_dir = repo_path.to_str().unwrap();
+        let repo_path = remote.local_dir(&self.run);
 
         // Check if repo_dir exists
         if repo_path.exists() {
-            if !git::dir_inside_git_repo(repo_dir) {
+            if !git::dir_inside_git_repo(&repo_path) {
                 // must delete repo and try again
-                std::fs::remove_dir_all(repo_dir)
+                std::fs::remove_dir_all(&repo_path)
                     .expect("Failed to remove repository and its contents");
             } else {
                 return Ok(repo_path);
             }
         }
 
-        let result = git::clone(remote.repo.as_str(), repo_dir);
+        let result = git::clone(remote.repo.as_str(), &repo_path);
         if result.status.success() {
             return Ok(repo_path);
         }
@@ -257,14 +267,54 @@ impl<'a> Ictc<'a> {
         })
     }
 
-    fn ifchange_remote(&mut self, remote: &RemoteLocation, block: &IctcBlock) -> bool {
+    pub fn ifchange_remote(&mut self, remote: &RemoteLocation, block: &IctcBlock) -> bool {
         // get path to clone of remote repo.
         match self.build_or_get_remote_repo(remote, block) {
             Ok(path) => {
                 println!("repo is cloned shallow at {:?}", path);
-                true
+                // now check if the remote file has changed since the marker
+                let lc = git::last_commit(&remote.local_dir(&self.run), &remote.path);
+                match lc {
+                    Ok(commit) => {
+                        println!("last commit: {}", commit.hash);
+
+                        if remote.lock_hash.is_empty() {
+                            // No lock hash was provided - recommend a diagnostic fix that includes the desired hash
+                            self.diagnostics.push(block_diagnostic(
+                                block,
+                                diagnostic::Severity::Error,
+                                "if-change-update-lock-hash",
+                                format!("Lock hash for IfChange needed; should be {}", commit.hash)
+                                    .as_str(),
+                            ));
+                            return false;
+                        }
+                        // If the lock hash matches the last commit hash - then nothing to do
+                        if commit.hash == remote.lock_hash {
+                            // nothing changed - all good
+                            return false;
+                        }
+                        true
+                    }
+                    Err(e) => {
+                        self.diagnostics.push(block_diagnostic(
+                            block,
+                            diagnostic::Severity::Error,
+                            "if-change-git-error",
+                            format!(
+                                "Failed to get last commit of remote file {}: {}",
+                                remote.path, e
+                            )
+                            .as_str(),
+                        ));
+                        false
+                    }
+                }
             }
-            Err(_e) => false,
+            Err(diag) => {
+                self.diagnostics.push(diag);
+                false
+            }
         }
     }
 

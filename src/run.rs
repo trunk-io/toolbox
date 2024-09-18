@@ -58,6 +58,12 @@ pub enum Subcommands {
 pub struct Run {
     pub paths: HashSet<PathBuf>,
     pub config: Conf,
-    pub is_upstream: bool,
     pub config_path: String,
+    pub cache_dir: String,
+}
+
+impl Run {
+    pub fn is_upstream(&self) -> bool {
+        self.cache_dir.ends_with("-upstream")
+    }
 }

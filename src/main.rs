@@ -160,7 +160,7 @@ fn run() -> anyhow::Result<()> {
         paths: cli.files.into_iter().map(PathBuf::from).collect(),
         config,
         config_path: toolbox_toml,
-        is_upstream: cli.cache_dir.ends_with("-upstream"),
+        cache_dir: cli.cache_dir.clone(),
     };
 
     let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) = rayon::join(

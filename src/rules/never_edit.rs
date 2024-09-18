@@ -30,7 +30,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
 
     // We only emit config issues for the current run (not the upstream) so we can guarantee
     // that config issues get reported and not conceiled by HTL
-    if config.paths.is_empty() && !run.is_upstream {
+    if config.paths.is_empty() && !run.is_upstream() {
         diagnostics.push(diagnostic::Diagnostic {
             path: run.config_path.clone(),
             range: None,
@@ -42,7 +42,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
     }
 
     // We only report diagnostic issues for config when not running as upstream
-    if !run.is_upstream {
+    if !run.is_upstream() {
         for glob_path in &config.paths {
             let mut matches_something = false;
             match glob(glob_path) {
