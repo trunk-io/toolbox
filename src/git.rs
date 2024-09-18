@@ -2,6 +2,7 @@ use git2::{AttrCheckFlags, AttrValue, Delta, DiffOptions, Repository};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::process::Output as ProcessOutput;
 
 #[derive(Debug, Clone)]
 pub struct Hunk {
@@ -28,6 +29,22 @@ pub struct FileChanges {
 
     /// Map of changed files and FileStatus
     pub paths: HashMap<String, FileStatus>,
+}
+
+pub struct Output {
+    pub status: std::process::ExitStatus,
+    pub stdout: String,
+    pub stderr: String,
+}
+
+impl Output {
+    pub fn new(po: ProcessOutput) -> Self {
+        Self {
+            status: po.status,
+            stdout: String::from_utf8_lossy(&po.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&po.stderr).to_string(),
+        }
+    }
 }
 
 fn is_lfs(repo: &Repository, path: &Path) -> bool {
@@ -158,7 +175,7 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     Ok(ret)
 }
 
-pub fn clone(repo_url: &str, destination: &str) -> Result<(), String> {
+pub fn clone(repo_url: &str, destination: &str) -> Output {
     let output = Command::new("git")
         .args(&[
             "clone",
@@ -172,9 +189,25 @@ pub fn clone(repo_url: &str, destination: &str) -> Result<(), String> {
         .output()
         .expect("Failed to execute git command");
 
-    if output.status.success() {
-        Ok(())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
-    }
+    Output::new(output)
+}
+
+pub fn status(dir: &str) -> Output {
+    let output = Command::new("git")
+        .args(&["status", "--porcelain"])
+        .current_dir(dir)
+        .output()
+        .expect("Failed to execute git command");
+
+    Output::new(output)
+}
+
+pub fn dir_inside_git_repo(dir: &str) -> bool {
+    let output = Command::new("git")
+        .args(&["rev-parse", "--is-inside-work-tree"])
+        .current_dir(dir)
+        .output()
+        .expect("Failed to execute git command");
+
+    output.status.success()
 }

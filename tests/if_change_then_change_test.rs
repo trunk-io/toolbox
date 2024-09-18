@@ -447,7 +447,9 @@ fn clone_cache_remote_repo() {
     };
 
     let mut ictc = Ictc::new(&run, "no-upstream");
-    ictc.build_or_get_remote_repo(&remote, &block);
+    let result = ictc.build_or_get_remote_repo(&remote, &block);
+
+    assert!(result.is_ok(), "clone on remote repo failed");
 
     // let result: Result<Vec<horton::rules::if_change_then_change::IctcBlock>, anyhow::Error> = find_ictc_blocks(&PathBuf::from(
     //     "tests/if_change_then_change/basic_ictc_remote.file",

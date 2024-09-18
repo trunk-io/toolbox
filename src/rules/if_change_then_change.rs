@@ -45,9 +45,26 @@ impl RemoteLocation {
         }
     }
 
+    fn extract_repo_name(repo_url: &str) -> Option<String> {
+        if repo_url.contains("github.com") {
+            let re = Regex::new(r"^git@github\.com:[\w\.-]+/(?P<name>[\w\.-]+)\.git$").unwrap();
+            if let Some(captures) = re.captures(repo_url) {
+                return Some(captures["name"].to_string());
+            }
+        }
+        None
+    }
+
+    pub fn repo_dir(&self) -> String {
+        if let Some(repo_name) = Self::extract_repo_name(&self.repo) {
+            return format!("{}-{}", repo_name, &self.repo_hash());
+        }
+        self.repo_hash()
+    }
+
     pub fn repo_hash(&self) -> String {
         let mut hasher = Sha256::new();
-        hasher.update(self.repo.to_string());
+        hasher.update(repo.to_string());
         let result = hasher.finalize();
         let hash_string = format!("{:x}", result);
         let hash_string = &hash_string[..32]; // Get the first 32 characters
@@ -205,26 +222,39 @@ impl<'a> Ictc<'a> {
         remote: &RemoteLocation,
         block: &IctcBlock,
     ) -> Result<PathBuf, diagnostic::Diagnostic> {
-        let current_dir = env::current_dir().expect("Failed to get current directory");
-        let repo_dir = current_dir.join(remote.repo_hash());
+        let current_dir: PathBuf = env::current_dir().expect("Failed to get current directory");
+        let repo_path = current_dir.join(remote.repo_hash());
 
-        git::clone(remote.repo.as_str(), repo_dir.to_str().unwrap())
-            .map_err(|e| {
-                block_diagnostic(
-                    block,
-                    diagnostic::Severity::Warning,
-                    "if-change-clone-failed",
-                    format!("Failed to clone remote repo at {}: {}", remote.repo, e).as_str(),
+        let repo_dir = repo_path.to_str().unwrap();
+
+        // Check if repo_dir exists
+        if repo_path.exists() {
+            if !git::dir_inside_git_repo(repo_dir) {
+                // must delete repo and try again
+                std::fs::remove_dir_all(repo_dir)
+                    .expect("Failed to remove repository and its contents");
+            } else {
+                return Ok(repo_path);
+            }
+        }
+
+        let result = git::clone(remote.repo.as_str(), repo_dir);
+        if result.status.success() {
+            return Ok(repo_path);
+        }
+
+        Err({
+            block_diagnostic(
+                block,
+                diagnostic::Severity::Warning,
+                "if-change-clone-failed",
+                format!(
+                    "Failed to clone remote repo at {}: {}",
+                    remote.repo, result.stderr
                 )
-            })
-            .unwrap_or_default();
-
-        Err(block_diagnostic(
-            block,
-            diagnostic::Severity::Warning,
-            "if-change-cannot-reach-remote",
-            format!("IfChange cannot access remote repo at {}", remote.repo).as_str(),
-        ))
+                .as_str(),
+            )
+        })
     }
 
     fn ifchange_remote(&mut self, remote: &RemoteLocation, block: &IctcBlock) -> bool {
