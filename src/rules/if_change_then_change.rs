@@ -346,12 +346,14 @@ impl<'a> Ictc<'a> {
                 println!("repo is cloned shallow at {:?}", path);
                 // now check if the remote file has changed since the marker
                 let lc = git::last_commit(&remote.local_dir(&self.run), &remote.path);
+
                 match lc {
                     Ok(commit) => {
+                        let truncated_hash = &commit.hash[..10];
                         if remote.lock_hash.is_empty() {
                             // No lock hash was provided - recommend a diagnostic fix that includes the desired hash
                             let message =
-                                format!("Hash for IfChange needed; should be {}", commit.hash);
+                                format!("Hash for IfChange required; should be {}", truncated_hash);
                             let diagnostic = Diagnostic {
                                 path: block.path.to_str().unwrap().to_string(),
                                 range: Some(block.get_range()),
@@ -359,7 +361,7 @@ impl<'a> Ictc<'a> {
                                 code: "if-change-update-lock-hash".to_string(),
                                 message: message.clone(),
                                 replacements: Some(vec![
-                                    remote.get_replacement_for_hash(&commit.hash)
+                                    remote.get_replacement_for_hash(truncated_hash)
                                 ]),
                             };
 
@@ -367,17 +369,15 @@ impl<'a> Ictc<'a> {
                             return false;
                         }
                         // If the lock hash matches the last commit hash - then nothing to do
-                        if commit.hash == remote.lock_hash {
+                        if commit.hash.starts_with(&remote.lock_hash) {
                             // nothing changed - all good
                             return false;
                         } else {
                             // commit hash has changed - must confirm we changed the code inside
                             // and also add an autofix diag to move the hash lock marker
 
-                            let message = format!(
-                                "Remote file changed - hash should be updated to {}",
-                                commit.hash
-                            );
+                            let message =
+                                format!("Remote file changed; new hash is {}", truncated_hash);
                             let diagnostic = Diagnostic {
                                 path: block.path.to_str().unwrap().to_string(),
                                 range: Some(block.get_range()),
@@ -385,7 +385,7 @@ impl<'a> Ictc<'a> {
                                 code: "if-change-remote-updated-new-hash".to_string(),
                                 message: message.clone(),
                                 replacements: Some(vec![
-                                    remote.get_replacement_for_hash(&commit.hash)
+                                    remote.get_replacement_for_hash(&truncated_hash)
                                 ]),
                             };
 
@@ -578,5 +578,9 @@ fn lines_view<R: BufRead>(reader: R) -> anyhow::Result<LinesView> {
 }
 
 // IfChange git@github.com:eslint/eslint.git LICENSE
+// Content inside here
+// ThenChange
+
+// IfChange git@github.com:eslint/eslint.git LICENSE#ABCDEF
 // Content inside here
 // ThenChange
