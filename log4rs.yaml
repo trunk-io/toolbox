@@ -1,0 +1,21 @@
+appenders:
+  stdout:
+    kind: console
+
+  # Appender for the step strategy
+  file:
+    kind: file
+    path: logs/toolbox.log
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S)} | {({l}):5.5} | {f}:{L} — {m}{n}"
+
+root:
+  level: debug
+  appenders:
+    - stdout
+
+loggers:
+  step:
+    level: trace
+    appenders:
+      - file

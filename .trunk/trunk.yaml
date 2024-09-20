@@ -39,7 +39,7 @@ lint:
         run: trunk-toolbox --version
       environment:
         - name: PATH
-          list: ["${linter}"]
+          list: ["${linter}", "${env.PATH}"]
   ignore:
     - linters: [trunk-toolbox]
       paths:

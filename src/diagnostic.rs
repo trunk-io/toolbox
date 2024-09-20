@@ -20,18 +20,23 @@ impl fmt::Display for Severity {
     }
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Position {
     pub line: u64,
     pub character: u64,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Range {
     pub start: Position,
     pub end: Position,
 }
 
+#[derive(Clone, Serialize)]
+pub struct Replacement {
+    pub deleted_region: Range,
+    pub inserted_content: String,
+}
 #[derive(Clone, Serialize)]
 pub struct Diagnostic {
     pub path: String,
@@ -39,6 +44,7 @@ pub struct Diagnostic {
     pub severity: Severity,
     pub code: String,
     pub message: String,
+    pub replacements: Option<Vec<Replacement>>,
 }
 
 #[derive(Serialize, Default)]

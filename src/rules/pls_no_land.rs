@@ -111,6 +111,7 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
                     severity: diagnostic::Severity::Error,
                     code: "do-not-land".to_string(),
                     message: format!("Found '{}'", m.as_str()),
+                    replacements: None,
                 });
             }
         }
@@ -136,6 +137,7 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
                     severity: diagnostic::Severity::Warning,
                     code: "todo".to_string(),
                     message: format!("Found '{}'", token),
+                    replacements: None,
                 });
             }
         }

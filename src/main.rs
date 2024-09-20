@@ -201,7 +201,18 @@ fn run() -> anyhow::Result<()> {
 }
 
 fn main() {
-    env_logger::init();
+    match log4rs::init_file("log4rs.yaml", Default::default()) {
+        Ok(_) => {
+            // Initialization succeeded
+            println!("Logging initialized successfully.");
+        }
+        Err(e) => {
+            // Initialization failed
+            eprintln!("Failed to initialize logging: {}", e);
+            // error!("Failed to initialize logging: {}", e);
+            // Handle the error, e.g., fallback to a default logger or exit
+        }
+    }
 
     match run() {
         Ok(_) => (),

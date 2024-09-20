@@ -8,24 +8,41 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use url::Url;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 
-use crate::diagnostic;
+use crate::diagnostic::{Diagnostic, Position, Range, Replacement, Severity};
 use crate::git;
+
+#[derive(Debug, Clone)]
+pub struct TextBlock {
+    pub location: Range,
+    pub text: String,
+}
 
 #[derive(Debug, Clone)]
 pub struct RemoteLocation {
     pub repo: String,
     pub path: String,
     pub lock_hash: String,
+    // content and location specifying this remote location in the original file
+    pub block: TextBlock,
 }
 
 impl RemoteLocation {
-    pub fn new(entry: &str) -> Self {
-        let parts: Vec<&str> = entry.split_whitespace().collect();
+    pub fn new(line: &str, block: &IctcBlock) -> Self {
+        let capture = RE_BEGIN.captures(line).unwrap();
+
+        // get the content of the second capture group which must be a remote file
+        let rule = capture
+            .get(2)
+            .with_context(|| "expected at least 3 captures")
+            .unwrap()
+            .as_str()
+            .trim();
+
+        let parts: Vec<&str> = rule.split_whitespace().collect();
         if parts.len() < 2 {
             panic!("Entry must contain at least two parts separated by space");
         }
@@ -38,10 +55,28 @@ impl RemoteLocation {
             String::new()
         };
 
+        // Calculate where in the string 'line' the string 'rule' appears
+        let rule_position = line.find(rule).expect("Rule not found in line") as u64;
+
+        let block = TextBlock {
+            location: Range {
+                start: Position {
+                    line: block.begin.unwrap(),
+                    character: rule_position,
+                },
+                end: Position {
+                    line: block.begin.unwrap(),
+                    character: rule_position + rule.len() as u64,
+                },
+            },
+            text: rule.to_string(),
+        };
+
         Self {
             repo: parts[0].to_string(),
             path,
             lock_hash,
+            block,
         }
     }
 
@@ -83,6 +118,41 @@ impl RemoteLocation {
         }
         cache_dir.join(self.repo_dir_name())
     }
+
+    pub fn get_replacement_for_hash(&self, new_hash: &str) -> Replacement {
+        if self.lock_hash.is_empty() {
+            // nothing to delete - just an insertion
+            // find insertion point which is at the end of the file name
+            Replacement {
+                deleted_region: Range {
+                    start: Position {
+                        line: self.block.location.start.line,
+                        character: self.block.location.end.character,
+                    },
+                    end: Position {
+                        line: self.block.location.start.line,
+                        character: self.block.location.end.character,
+                    },
+                },
+                inserted_content: format!("#{}", new_hash),
+            }
+        } else {
+            // find the location of the original hash and replace it with the new hash
+            Replacement {
+                deleted_region: Range {
+                    start: Position {
+                        line: self.block.location.start.line,
+                        character: self.block.location.end.character - self.lock_hash.len() as u64,
+                    },
+                    end: Position {
+                        line: self.block.location.start.line,
+                        character: self.block.location.end.character,
+                    },
+                },
+                inserted_content: new_hash.to_string(),
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -109,13 +179,13 @@ pub struct IctcBlock {
 }
 
 impl IctcBlock {
-    fn get_range(&self) -> diagnostic::Range {
-        diagnostic::Range {
-            start: diagnostic::Position {
+    fn get_range(&self) -> Range {
+        Range {
+            start: Position {
                 line: self.begin.unwrap(),
                 character: 0,
             },
-            end: diagnostic::Position {
+            end: Position {
                 line: self.end.unwrap(),
                 character: 0,
             },
@@ -131,7 +201,7 @@ lazy_static::lazy_static! {
 pub struct Ictc<'a> {
     run: &'a Run,
     upstream: String,
-    diagnostics: Vec<diagnostic::Diagnostic>,
+    pub diagnostics: Vec<Diagnostic>,
 }
 
 impl<'a> Ictc<'a> {
@@ -143,7 +213,7 @@ impl<'a> Ictc<'a> {
         }
     }
 
-    pub fn run(&mut self) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+    pub fn run(&mut self) -> anyhow::Result<Vec<Diagnostic>> {
         let config = &self.run.config.ifchange;
 
         if !config.enabled {
@@ -225,7 +295,7 @@ impl<'a> Ictc<'a> {
             }
         }
 
-        debug!("ICTC blocks are:\n{:?}", blocks);
+        log::trace!("ICTC blocks are:\n{:?}", blocks);
 
         Ok(self.diagnostics.clone())
     }
@@ -234,7 +304,7 @@ impl<'a> Ictc<'a> {
         &mut self,
         remote: &RemoteLocation,
         block: &IctcBlock,
-    ) -> Result<PathBuf, diagnostic::Diagnostic> {
+    ) -> Result<PathBuf, Diagnostic> {
         let repo_path = remote.local_dir(&self.run);
 
         // Check if repo_dir exists
@@ -248,6 +318,8 @@ impl<'a> Ictc<'a> {
             }
         }
 
+        log::debug!("cloning {:?} at {:?}", remote.repo.as_str(), repo_path);
+
         let result = git::clone(remote.repo.as_str(), &repo_path);
         if result.status.success() {
             return Ok(repo_path);
@@ -256,7 +328,7 @@ impl<'a> Ictc<'a> {
         Err({
             block_diagnostic(
                 block,
-                diagnostic::Severity::Warning,
+                Severity::Warning,
                 "if-change-clone-failed",
                 format!(
                     "Failed to clone remote repo at {}: {}",
@@ -276,30 +348,55 @@ impl<'a> Ictc<'a> {
                 let lc = git::last_commit(&remote.local_dir(&self.run), &remote.path);
                 match lc {
                     Ok(commit) => {
-                        println!("last commit: {}", commit.hash);
-
                         if remote.lock_hash.is_empty() {
                             // No lock hash was provided - recommend a diagnostic fix that includes the desired hash
-                            self.diagnostics.push(block_diagnostic(
-                                block,
-                                diagnostic::Severity::Error,
-                                "if-change-update-lock-hash",
-                                format!("Lock hash for IfChange needed; should be {}", commit.hash)
-                                    .as_str(),
-                            ));
+                            let message =
+                                format!("Hash for IfChange needed; should be {}", commit.hash);
+                            let diagnostic = Diagnostic {
+                                path: block.path.to_str().unwrap().to_string(),
+                                range: Some(block.get_range()),
+                                severity: Severity::Warning,
+                                code: "if-change-update-lock-hash".to_string(),
+                                message: message.clone(),
+                                replacements: Some(vec![
+                                    remote.get_replacement_for_hash(&commit.hash)
+                                ]),
+                            };
+
+                            self.diagnostics.push(diagnostic);
                             return false;
                         }
                         // If the lock hash matches the last commit hash - then nothing to do
                         if commit.hash == remote.lock_hash {
                             // nothing changed - all good
                             return false;
+                        } else {
+                            // commit hash has changed - must confirm we changed the code inside
+                            // and also add an autofix diag to move the hash lock marker
+
+                            let message = format!(
+                                "Remote file changed - hash should be updated to {}",
+                                commit.hash
+                            );
+                            let diagnostic = Diagnostic {
+                                path: block.path.to_str().unwrap().to_string(),
+                                range: Some(block.get_range()),
+                                severity: Severity::Warning,
+                                code: "if-change-remote-updated-new-hash".to_string(),
+                                message: message.clone(),
+                                replacements: Some(vec![
+                                    remote.get_replacement_for_hash(&commit.hash)
+                                ]),
+                            };
+
+                            self.diagnostics.push(diagnostic);
+                            return true;
                         }
-                        true
                     }
                     Err(e) => {
                         self.diagnostics.push(block_diagnostic(
                             block,
-                            diagnostic::Severity::Error,
+                            Severity::Error,
                             "if-change-git-error",
                             format!(
                                 "Failed to get last commit of remote file {}: {}",
@@ -327,42 +424,45 @@ impl<'a> Ictc<'a> {
                 ThenChange::RepoFile(local_file) => {
                     // Check if the repo file exists - if it was deleted this is a warning
                     if !Path::new(local_file).exists() {
-                        self.diagnostics.push(diagnostic::Diagnostic {
+                        self.diagnostics.push(Diagnostic {
                             path: block.path.to_str().unwrap().to_string(),
                             range: Some(block.get_range()),
-                            severity: diagnostic::Severity::Warning,
+                            severity: Severity::Warning,
                             code: "if-change-file-does-not-exist".to_string(),
                             message: format!("ThenChange {} does not exist", local_file.display(),),
+                            replacements: None,
                         });
                     }
                     // If target file was not changed raise issue
                     if blocks_by_path.get(&local_file).is_none() {
-                        self.diagnostics.push(diagnostic::Diagnostic {
+                        self.diagnostics.push(Diagnostic {
                             path: block.path.to_str().unwrap().to_string(),
                             range: Some(block.get_range()),
-                            severity: diagnostic::Severity::Error,
+                            severity: Severity::Error,
                             code: "if-change-then-change-this".to_string(),
                             message: format!(
                                 "Expected change in {} because {} was modified",
                                 local_file.display(),
                                 block.path.display(),
                             ),
+                            replacements: None,
                         });
                     }
                 }
                 ThenChange::MissingIf => {
-                    self.diagnostics.push(diagnostic::Diagnostic {
+                    self.diagnostics.push(Diagnostic {
                         path: block.path.to_str().unwrap().to_string(),
                         range: Some(block.get_range()),
-                        severity: diagnostic::Severity::Warning,
+                        severity: Severity::Warning,
                         code: "if-change-mismatched".to_string(),
                         message: "Expected preceding IfChange tag".to_string(),
+                        replacements: None,
                     });
                 }
                 ThenChange::MissingThen => {
                     self.diagnostics.push(block_diagnostic(
                         block,
-                        diagnostic::Severity::Warning,
+                        Severity::Warning,
                         "if-change-mismatched",
                         "Expected matching ThenChange tag",
                     ));
@@ -372,18 +472,14 @@ impl<'a> Ictc<'a> {
     }
 }
 
-pub fn block_diagnostic(
-    block: &IctcBlock,
-    sev: diagnostic::Severity,
-    code: &str,
-    msg: &str,
-) -> diagnostic::Diagnostic {
-    diagnostic::Diagnostic {
+pub fn block_diagnostic(block: &IctcBlock, sev: Severity, code: &str, msg: &str) -> Diagnostic {
+    Diagnostic {
         path: block.path.to_str().unwrap().to_string(),
         range: Some(block.get_range()),
         severity: sev,
         code: code.to_string(),
         message: msg.to_string(),
+        replacements: None,
     }
 }
 
@@ -417,23 +513,24 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
                 .as_str()
                 .trim();
 
-            let ifchange = if source_trigger.is_empty() {
+            let mut ib = IctcBlock {
+                path: path.clone(),
+                begin: line_no,
+                end: None,
+                ifchange: None,
+                thenchange: None,
+            };
+
+            ib.ifchange = if source_trigger.is_empty() {
                 None
             } else if source_trigger.contains(" ") {
                 // If the source trigger has a space in the middle then its in the format of a remote repo file
-                Some(IfChange::RemoteFile(RemoteLocation::new(source_trigger)))
+                Some(IfChange::RemoteFile(RemoteLocation::new(line, &ib)))
             } else {
                 // Looks like a file path but it doesn't exist
                 Some(IfChange::RepoFile(PathBuf::from(source_trigger)))
             };
-
-            block = Some(IctcBlock {
-                path: path.clone(),
-                begin: line_no,
-                end: None,
-                ifchange,
-                thenchange: None,
-            });
+            block = Some(ib);
         } else if let Some(end_capture) = RE_END.captures(line) {
             if let Some(mut block_value) = block {
                 block_value.end = line_no;
@@ -479,3 +576,7 @@ fn lines_view<R: BufRead>(reader: R) -> anyhow::Result<LinesView> {
     }
     Ok(ret)
 }
+
+// IfChange git@github.com:eslint/eslint.git LICENSE
+// Content inside here
+// ThenChange

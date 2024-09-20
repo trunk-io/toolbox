@@ -1,6 +1,7 @@
 use confique::{Config, Partial};
 use horton::config::confique_partial_if_change_conf::PartialIfChangeConf;
 use horton::config::Conf;
+use horton::diagnostic::{Position, Range};
 use horton::run::Run;
 use spectral::prelude::*;
 
@@ -9,7 +10,7 @@ use integration_testing::TestRepo;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
-use horton::rules::if_change_then_change::{find_ictc_blocks, IctcBlock};
+use horton::rules::if_change_then_change::{find_ictc_blocks, IctcBlock, TextBlock};
 use horton::rules::if_change_then_change::{Ictc, IfChange, RemoteLocation, ThenChange};
 
 fn assert_no_expected_changes(before: &str, after: &str) -> anyhow::Result<()> {
@@ -421,9 +422,9 @@ fn find_repo_ictc_blocks() {
 }
 
 #[test]
-fn clone_cache_remote_repo() {
+fn remote_repo_insert_hash_fix() {
     type PartialConf = <Conf as Config>::Partial;
-    let mut config = Conf::from_partial(PartialConf::default_values()).unwrap();
+    let config = Conf::from_partial(PartialConf::default_values()).unwrap();
 
     let run: Run = Run {
         paths: HashSet::new(),
@@ -436,6 +437,19 @@ fn clone_cache_remote_repo() {
         repo: "git@github.com:eslint/eslint.git".to_string(),
         path: "LICENSE".to_string(),
         lock_hash: "".to_string(),
+        block: TextBlock {
+            location: Range {
+                start: Position {
+                    line: 1,
+                    character: 1,
+                },
+                end: Position {
+                    line: 1,
+                    character: 2,
+                },
+            },
+            text: "git@github.com:eslint/eslint.git LICENSE".to_string(),
+        },
     };
 
     let block = IctcBlock {
@@ -447,28 +461,74 @@ fn clone_cache_remote_repo() {
     };
 
     let mut ictc = Ictc::new(&run, "no-upstream");
-    let result = ictc.ifchange_remote(&remote, &block);
+    ictc.ifchange_remote(&remote, &block);
+    assert!(ictc.diagnostics.len() == 1, "should have 1 diagnostic");
 
-    assert!(result, "clone on remote repo failed");
+    let diag = ictc.diagnostics.get(0).unwrap();
+    let replacements = diag
+        .replacements
+        .as_ref()
+        .expect("should have replacements");
+    let replacement = replacements
+        .get(0)
+        .expect("should have at least one replacement");
 
-    // let result: Result<Vec<horton::rules::if_change_then_change::IctcBlock>, anyhow::Error> = find_ictc_blocks(&PathBuf::from(
-    //     "tests/if_change_then_change/basic_ictc_remote.file",
-    // ));
-    // assert!(result.is_ok());
+    assert_that(&replacement.inserted_content).starts_with("#");
+}
 
-    // let list = result.unwrap();
-    // assert!(list.len() == 1, "should find 1 ictc block");
+#[test]
+fn remote_repo_update_hash() {
+    type PartialConf = <Conf as Config>::Partial;
+    let config = Conf::from_partial(PartialConf::default_values()).unwrap();
 
-    // let first = &list[0];
-    // assert_eq!(first.begin, Some(6));
-    // assert_eq!(first.end, Some(10));
-    // match &first.ifchange {
-    //     Some(IfChange::RemoteFile(remote)) => {
-    //         assert_that(&remote.repo).contains("github.com:eslint/eslint.git");
-    //         assert_that(&remote.path).contains("LICENSE");
-    //     }
-    //     _ => {
-    //         panic!("wrong ifchange type");
-    //     }
-    // };
+    let run: Run = Run {
+        paths: HashSet::new(),
+        config,
+        cache_dir: "".to_string(),
+        config_path: "fake/config/path".to_string(),
+    };
+
+    let remote = RemoteLocation {
+        repo: "git@github.com:eslint/eslint.git".to_string(),
+        path: "LICENSE".to_string(),
+        lock_hash: "ABCDEFG".to_string(),
+        block: TextBlock {
+            location: Range {
+                start: Position {
+                    line: 1,
+                    character: 1,
+                },
+                end: Position {
+                    line: 1,
+                    character: 47,
+                },
+            },
+            text: "git@github.com:eslint/eslint.git LICENSE#ABCDEFG".to_string(),
+        },
+    };
+
+    let block = IctcBlock {
+        path: PathBuf::from("tests/if_change_then_change/basic_ictc_remote.file"),
+        begin: Some(6),
+        end: Some(10),
+        ifchange: Some(IfChange::RemoteFile(remote.clone())),
+        thenchange: Some(ThenChange::RepoFile(PathBuf::from("f2oo.bar"))),
+    };
+
+    let mut ictc = Ictc::new(&run, "no-upstream");
+    ictc.ifchange_remote(&remote, &block);
+    assert!(ictc.diagnostics.len() == 1, "should have 1 diagnostic");
+
+    let diag = ictc.diagnostics.get(0).unwrap();
+    let replacements = diag
+        .replacements
+        .as_ref()
+        .expect("should have replacements");
+    let replacement = replacements
+        .get(0)
+        .expect("should have at least one replacement");
+
+    assert_that(&replacement.deleted_region.start.character).is_equal_to(40);
+    assert_that(&replacement.deleted_region.end.character).is_equal_to(47);
+    assert_that(&replacement.inserted_content.len()).is_equal_to(40);
 }
