@@ -1,6 +1,5 @@
 use crate::run::Run;
 use anyhow::Context;
-use log::debug;
 use sha2::{Digest, Sha256};
 
 use std::collections::{HashMap, HashSet};
@@ -92,11 +91,11 @@ impl RemoteLocation {
 
     fn repo_hash(&self) -> String {
         let mut hasher = Sha256::new();
-        hasher.update(self.repo.to_string());
+        hasher.update(&self.repo);
         let result = hasher.finalize();
         let hash_string = format!("{:x}", result);
         let hash_string = &hash_string[..32]; // Get the first 32 characters
-        return hash_string.to_string();
+        hash_string.to_string()
     }
 
     pub fn repo_dir_name(&self) -> String {
@@ -285,12 +284,12 @@ impl<'a> Ictc<'a> {
                     IfChange::RemoteFile(remote) => {
                         // remote file should be in form of
                         // {REMOTE_REPO} {REMOTE_PATH}#{LOCK_HASH}
-                        if self.ifchange_remote(&remote, &block) {
+                        if self.ifchange_remote(remote, block) {
                             // if it's ok we will keep processing the rest of the rule
-                            self.thenchange(&block, &blocks_by_path);
+                            self.thenchange(block, &blocks_by_path);
                         }
                     }
-                    _ => self.thenchange(&block, &blocks_by_path),
+                    _ => self.thenchange(block, &blocks_by_path),
                 }
             }
         }
@@ -305,7 +304,7 @@ impl<'a> Ictc<'a> {
         remote: &RemoteLocation,
         block: &IctcBlock,
     ) -> Result<PathBuf, Diagnostic> {
-        let repo_path = remote.local_dir(&self.run);
+        let repo_path = remote.local_dir(self.run);
 
         // Check if repo_dir exists
         if repo_path.exists() {
@@ -345,7 +344,7 @@ impl<'a> Ictc<'a> {
             Ok(path) => {
                 println!("repo is cloned shallow at {:?}", path);
                 // now check if the remote file has changed since the marker
-                let lc = git::last_commit(&remote.local_dir(&self.run), &remote.path);
+                let lc = git::last_commit(&remote.local_dir(self.run), &remote.path);
 
                 match lc {
                     Ok(commit) => {
@@ -371,7 +370,7 @@ impl<'a> Ictc<'a> {
                         // If the lock hash matches the last commit hash - then nothing to do
                         if commit.hash.starts_with(&remote.lock_hash) {
                             // nothing changed - all good
-                            return false;
+                            false
                         } else {
                             // commit hash has changed - must confirm we changed the code inside
                             // and also add an autofix diag to move the hash lock marker
@@ -385,12 +384,12 @@ impl<'a> Ictc<'a> {
                                 code: "if-change-remote-updated-new-hash".to_string(),
                                 message: message.clone(),
                                 replacements: Some(vec![
-                                    remote.get_replacement_for_hash(&truncated_hash)
+                                    remote.get_replacement_for_hash(truncated_hash)
                                 ]),
                             };
 
                             self.diagnostics.push(diagnostic);
-                            return true;
+                            true
                         }
                     }
                     Err(e) => {
@@ -523,7 +522,7 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
 
             ib.ifchange = if source_trigger.is_empty() {
                 None
-            } else if source_trigger.contains(" ") {
+            } else if source_trigger.contains(' ') {
                 // If the source trigger has a space in the middle then its in the format of a remote repo file
                 Some(IfChange::RemoteFile(RemoteLocation::new(line, &ib)))
             } else {

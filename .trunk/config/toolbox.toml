@@ -1,0 +1,129 @@
+# Configuration for trunk toolbox. Generate default by calling 'trunk-toolbox genconfig'
+
+[ifchange]
+enabled = false
+
+[donotland]
+enabled = true
+
+[todo]
+enabled = true
+sleep_for = 1000
+
+[neveredit]
+enabled = false
+paths = []
+
+# nothing here
+# Ih2LF
+# HNcvh
+# GhbHo
+# G3VuQ
+# 3GSLq
+# V4Vbn
+# igeowh
+# waKtV
+# xmNcG
+# jri2U
+# MCrN5
+# Es8bb
+# CtWae
+# vD0hL
+# uIcIA
+# dAhJY
+# UpV5q
+# d510D
+# 5N2mW
+# yyMc6
+# UgNzZ
+# Tl8le
+# F3X6m
+# doyGg
+# YEODp
+# 3aeYX
+# DBpfO
+# 5d6b9
+# C4tO8
+# d9kna
+# 06L1E
+# WiLBC
+# PYeCQ
+# 3Ce46
+# haeio
+# 24ITN
+# BIedu
+# NYwIK
+# QGP3e
+# S5VZ5
+# BK6iu
+# 0jdCV
+# ajFuW
+# 0hC3l
+# Uw8bT
+# lJ2dO
+# itODb
+# WjXJK
+# EDdXj
+# iTLQs
+# Fkk5m
+# jTy2F
+# yT905
+# paH0c
+# lnG2a
+# BscVm
+# M4UOi
+# oktmU
+# 7dJXy
+# kKZV3
+# wHzpI
+# D16vj
+# bviZa
+# pY9vU
+# sR1LG
+# U8X09
+# OSC80
+# JvkOa
+# ey612
+# EJIXp
+# kNUBw
+# tgvkr
+# 1YLS1
+# 8HBIf
+# pUTTW
+# ON9Qw
+# RM66a
+# z6XHy
+# Xc1DF
+# 9Giat
+# OZ0ot
+# XJe6m
+# TSRNL
+# 0e2Mn
+# lvnx3
+# itv6h
+# qU9P0
+# GH6kJ
+# TKW9R
+# Upvlo
+# alL22
+# HuT2P
+# VSG9J
+# MWQfC
+# DtCJ7
+# BGlku
+# WTG7d
+# TnNBF
+# BCNaD
+# 6zppq
+# 5QlIb
+# pNwcE
+# Wjmyh
+# hAJqi
+# sQz83
+# uAtyp
+# EgNWX
+# lWt5H
+# iigey
+# 1MmEr
+# zPRO9
+# DYEkD

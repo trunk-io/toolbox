@@ -7,7 +7,9 @@ use horton::rules::never_edit::never_edit;
 use horton::rules::pls_no_land::pls_no_land;
 use horton::run::{Cli, OutputFormat, Run, Subcommands};
 
+use log::debug;
 use serde_sarif::sarif;
+use std::env;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
@@ -45,9 +47,10 @@ fn generate_sarif_string(
         .message(
             sarif::MessageBuilder::default()
                 .text(format!(
-                    "{:?} files processed in {:?}",
+                    "{:?} files processed in {:?}\n{:?}",
                     run_context.paths.len(),
                     start_time.elapsed(),
+                    run_context.paths
                 ))
                 .build()
                 .unwrap(),
@@ -166,10 +169,13 @@ fn run() -> anyhow::Result<()> {
 }
 
 fn main() {
-    match log4rs::init_file("log4rs.yaml", Default::default()) {
+    let current_dir = env::current_dir().expect("Failed to get current directory");
+    let log_config_path = current_dir.join("log4rs.yaml");
+
+    match log4rs::init_file(&log_config_path, Default::default()) {
         Ok(_) => {
             // Initialization succeeded
-            println!("Logging initialized successfully.");
+            debug!("logging initialized successfullly {:?}", log_config_path);
         }
         Err(e) => {
             // Initialization failed

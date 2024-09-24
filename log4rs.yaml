@@ -5,7 +5,7 @@ appenders:
   # Appender for the step strategy
   file:
     kind: file
-    path: logs/toolbox.log
+    path: toolbox.log
     encoder:
       pattern: "{d(%Y-%m-%d %H:%M:%S)} | {({l}):5.5} | {f}:{L} — {m}{n}"
 

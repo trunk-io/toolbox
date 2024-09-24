@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Define the paths
-release_path="./target/release/trunk-toolbox"
-debug_path="./target/debug/trunk-toolbox"
+# Define the paths. Don't override in case it's being passed in by trunk check
+release_path="${release_path:-./target/release/trunk-toolbox}"
+debug_path="${debug_path:-./target/debug/trunk-toolbox}"
 fallback_path="trunk-toolbox"
 
 # Check if the release and debug files exist

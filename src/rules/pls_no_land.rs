@@ -4,12 +4,16 @@ extern crate regex;
 use crate::diagnostic;
 use crate::run::Run;
 use anyhow::Context;
+use log::warn;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use std::fs::File;
 use std::io::Read;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
+
+use std::thread::sleep;
+use std::time::Duration;
 
 lazy_static::lazy_static! {
     static ref DNL_RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
@@ -55,6 +59,15 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
 
 fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     let config = &run.config;
+
+    if config.todo.enabled && config.todo.sleep_for > 0 {
+        // test code to force the todo rule to run slowly per file
+        warn!(
+            "sleeping inside pls_no_land for {:?}ms",
+            config.todo.sleep_for
+        );
+        sleep(Duration::from_millis(config.todo.sleep_for));
+    }
 
     if is_binary_file(path).unwrap_or(true) {
         log::debug!("Ignoring binary file {}", path.display());

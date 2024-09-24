@@ -183,13 +183,13 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
 
 pub fn clone(repo_url: &str, destination: &PathBuf) -> Output {
     let output = Command::new("git")
-        .args(&[
+        .args([
             "clone",
             "--no-checkout",
             "--bare",
             "--filter=blob:none",
             repo_url,
-            destination.to_str().unwrap(),
+            destination.to_string_lossy().as_ref(),
         ])
         .output()
         .expect("Failed to execute git command");
@@ -199,7 +199,7 @@ pub fn clone(repo_url: &str, destination: &PathBuf) -> Output {
 
 pub fn status(dir: &PathBuf) -> Output {
     let output = Command::new("git")
-        .args(&["status", "--porcelain"])
+        .args(["status", "--porcelain"])
         .current_dir(dir)
         .output()
         .expect("Failed to execute git command");
@@ -209,7 +209,7 @@ pub fn status(dir: &PathBuf) -> Output {
 
 pub fn dir_inside_git_repo(dir: &PathBuf) -> bool {
     let output = Command::new("git")
-        .args(&["rev-parse", "--is-inside-work-tree"])
+        .args(["rev-parse", "--is-inside-work-tree"])
         .current_dir(dir)
         .output()
         .expect("Failed to execute git command");
@@ -219,7 +219,7 @@ pub fn dir_inside_git_repo(dir: &PathBuf) -> bool {
 
 pub fn last_commit(dir: &PathBuf, file: &str) -> Result<Commit, String> {
     let result = Command::new("git")
-        .args(&[
+        .args([
             "--no-pager",
             "log",
             "-1",
