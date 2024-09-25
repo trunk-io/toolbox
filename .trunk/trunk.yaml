@@ -37,7 +37,7 @@ lint:
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version
-      direct_configs: [toolbox.toml, log4rs.yaml]
+      direct_configs: [toolbox.toml] # // , log4rs.yaml]
       affects_cache:
         - toolbox.toml
       environment:

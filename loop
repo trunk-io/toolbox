@@ -17,7 +17,7 @@ generate_random_content() {
 # Loop 100 times
 for i in {1..100}; do
 	echo "Running trunk check (Iteration ${i})"
-	/home/eli/Github/trunk/bazel-bin/trunk/cli/cli check -n
+	trunk check --filter=trunk-toolbox
 
 	# Check if the command was successful
 	if [[ $? -ne 0 ]]; then
