@@ -31,10 +31,9 @@ lint:
           output: sarif
           batch: true
           cache_results: true
-          cache_ttl: 2000ms
           success_codes: [0]
           read_output_from: tmp_file
-          # disable_upstream: false
+          disable_upstream: false
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version

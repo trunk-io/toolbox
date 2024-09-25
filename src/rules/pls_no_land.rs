@@ -60,15 +60,6 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
 fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     let config = &run.config;
 
-    if config.todo.enabled && config.todo.sleep_for > 0 {
-        // test code to force the todo rule to run slowly per file
-        warn!(
-            "sleeping inside pls_no_land for {:?}ms",
-            config.todo.sleep_for
-        );
-        sleep(Duration::from_millis(config.todo.sleep_for));
-    }
-
     if is_binary_file(path).unwrap_or(true) {
         log::debug!("Ignoring binary file {}", path.display());
         return Ok(vec![]);
@@ -76,6 +67,15 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
 
     if is_ignored_file(path) {
         return Ok(vec![]);
+    }
+
+    if config.todo.enabled && config.todo.sleep_for > 0 {
+        // test code to force the todo rule to run slowly per file
+        warn!(
+            "sleeping inside TODO rule for {:?}ms",
+            config.todo.sleep_for
+        );
+        sleep(Duration::from_millis(config.todo.sleep_for));
     }
 
     let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;

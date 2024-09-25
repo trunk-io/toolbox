@@ -7,11 +7,18 @@ use horton::rules::never_edit::never_edit;
 use horton::rules::pls_no_land::pls_no_land;
 use horton::run::{Cli, OutputFormat, Run, Subcommands};
 
-use log::debug;
+use log::{debug, warn};
 use serde_sarif::sarif;
 use std::env;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
+
+use log::LevelFilter;
+use log4rs::{
+    append::console::ConsoleAppender,
+    config::{Appender, Root},
+    encode::pattern::PatternEncoder,
+};
 
 fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
     return original_results
@@ -47,10 +54,15 @@ fn generate_sarif_string(
         .message(
             sarif::MessageBuilder::default()
                 .text(format!(
-                    "{:?} files processed in {:?}\n{:?}",
+                    "{:?} files processed in {:?} files:[{}]",
                     run_context.paths.len(),
                     start_time.elapsed(),
-                    run_context.paths
+                    run_context
+                        .paths
+                        .iter()
+                        .map(|p| p.to_string_lossy())
+                        .collect::<Vec<_>>()
+                        .join(", ")
                 ))
                 .build()
                 .unwrap(),
@@ -168,21 +180,40 @@ fn run() -> anyhow::Result<()> {
     Ok(())
 }
 
+fn init_default_logger() {
+    // Create a console appender for stdout
+    let stdout = ConsoleAppender::builder()
+        .encoder(Box::new(PatternEncoder::new(
+            "{d(%H:%M:%S)} | {({l}):5.5} | {f}:{L} | {m}{n}",
+        )))
+        .build();
+
+    // Build the log4rs configuration
+    let config = log4rs::Config::builder()
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Debug))
+        .expect("Failed to build log4rs configuration");
+
+    log4rs::init_config(config).unwrap();
+}
+
 fn main() {
+    // initialize logging from file if log4rs.yaml exists
     let current_dir = env::current_dir().expect("Failed to get current directory");
     let log_config_path = current_dir.join("log4rs.yaml");
-
-    match log4rs::init_file(&log_config_path, Default::default()) {
-        Ok(_) => {
-            // Initialization succeeded
-            debug!("logging initialized successfullly {:?}", log_config_path);
+    if log_config_path.exists() {
+        match log4rs::init_file(&log_config_path, Default::default()) {
+            Ok(_) => {
+                // Initialization succeeded
+                debug!("logging initialized - {:?}", log_config_path);
+            }
+            Err(e) => {
+                init_default_logger();
+                warn!("Falling back to default logging setup. override with valid 'log4rs.yaml' file, {}", e);
+            }
         }
-        Err(e) => {
-            // Initialization failed
-            eprintln!("Failed to initialize logging: {}", e);
-            // error!("Failed to initialize logging: {}", e);
-            // Handle the error, e.g., fallback to a default logger or exit
-        }
+    } else {
+        init_default_logger();
     }
 
     match run() {

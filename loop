@@ -17,15 +17,15 @@ generate_random_content() {
 # Loop 100 times
 for i in {1..100}; do
 	echo "Running trunk check (Iteration ${i})"
-	/home/eli/Github/trunk/bazel-bin/trunk/cli/cli check
+	/home/eli/Github/trunk/bazel-bin/trunk/cli/cli check -n
 
 	# Check if the command was successful
 	if [[ $? -ne 0 ]]; then
 		echo "Command failed on iteration ${i}"
 	fi
 
-	random_content=$(generate_random_content)
-	echo "${random_content}" >>.trunk/config/toolbox.toml
+	# random_content=$(generate_random_content)
+	# echo "${random_content}" >>.trunk/config/toolbox.toml
 
 done
 
