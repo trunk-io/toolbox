@@ -8,7 +8,7 @@ enabled = true
 
 [todo]
 enabled = true
-sleep_for = 5000
+sleep_for = 2000
 
 [neveredit]
 enabled = false

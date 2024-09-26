@@ -15,10 +15,10 @@ generate_random_content() {
 }
 
 # Loop 100 times
-for i in {1..100}; do
+for i in {1..1000}; do
 	echo "Running trunk check (Iteration ${i})"
 	trunk check --filter=trunk-toolbox
-
+	# trunk check --filter=trunk-toolbox
 	# Check if the command was successful
 	if [[ $? -ne 0 ]]; then
 		echo "Command failed on iteration ${i}"

@@ -11,13 +11,13 @@ runtimes:
     - node@18.12.1
     - rust@1.76.0
 cli:
-  version: 1.22.3
+  version: 1.22.6-beta.12
 api:
   address: api.trunk-staging.io:8443
 
 tools:
   enabled:
-    - gh@2.55.0
+    - gh@2.57.0
   runtimes:
     - rust
 lint:
@@ -31,6 +31,7 @@ lint:
           output: sarif
           batch: true
           cache_results: true
+          cache_ttl: 3000ms
           success_codes: [0]
           read_output_from: tmp_file
           disable_upstream: false
@@ -53,19 +54,20 @@ lint:
         - tests/**
 
   enabled:
+    - osv-scanner@1.8.5
     - shellcheck@0.10.0
     - shfmt@3.6.0
-    - trunk-toolbox@0.3.2
-    - checkov@3.2.238
-    - trufflehog@3.81.9
+    - trunk-toolbox@0.4.1
+    - checkov@3.2.255
+    - trufflehog@3.82.5
     - oxipng@9.1.2
     - yamllint@1.35.1
     - git-diff-check
     - taplo@0.9.3
-    - actionlint@1.7.1
+    - actionlint@1.7.2
     - clippy@1.76.0
-    - gitleaks@8.18.4
-    - markdownlint@0.41.0
+    - gitleaks@8.19.2
+    - markdownlint@0.42.0
     - prettier@3.3.3
     - rustfmt@1.76.0
 actions:
