@@ -4,11 +4,10 @@
 enabled = false
 
 [donotland]
-enabled = true
+enabled = false
 
 [todo]
-enabled = true
-sleep_for = 2000
+enabled = false
 
 [neveredit]
 enabled = false

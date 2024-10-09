@@ -69,15 +69,6 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
         return Ok(vec![]);
     }
 
-    if config.todo.enabled && config.todo.sleep_for > 0 {
-        // test code to force the todo rule to run slowly per file
-        warn!(
-            "sleeping inside TODO rule for {:?}ms",
-            config.todo.sleep_for
-        );
-        sleep(Duration::from_millis(config.todo.sleep_for));
-    }
-
     let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;
     let mut in_buf = BufReader::new(in_file);
 

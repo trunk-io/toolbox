@@ -40,8 +40,6 @@ pub struct PlsNotLandConf {
 pub struct TodoConf {
     #[config(default = false)]
     pub enabled: bool,
-    #[config(default = 0)]
-    pub sleep_for: u64,
 }
 
 #[derive(Config)]
