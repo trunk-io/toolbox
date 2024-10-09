@@ -31,7 +31,7 @@ lint:
           output: sarif
           batch: true
           cache_results: true
-          cache_ttl: 3000ms
+          cache_ttl: 6h
           success_codes: [0]
           read_output_from: tmp_file
           disable_upstream: false

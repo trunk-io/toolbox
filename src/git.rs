@@ -181,7 +181,7 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     Ok(ret)
 }
 
-pub fn clone(repo_url: &str, destination: &PathBuf) -> Output {
+pub fn clone(repo_url: &str, destination: &Path) -> Output {
     let output = Command::new("git")
         .args([
             "clone",

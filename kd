@@ -1,3 +1,0 @@
-#!/bin/bash
-
-/home/eli/Github/trunk/bazel-bin/trunk/cli/cli daemon shutdown
