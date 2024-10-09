@@ -2,7 +2,7 @@ version: 0.1
 plugins:
   sources:
     - id: trunk
-      ref: v1.6.2
+      ref: v1.6.3
       uri: https://github.com/trunk-io/plugins
 runtimes:
   enabled:
@@ -11,13 +11,13 @@ runtimes:
     - node@18.12.1
     - rust@1.76.0
 cli:
-  version: 1.22.6-beta.12
+  version: 1.22.6
 api:
   address: api.trunk-staging.io:8443
 
 tools:
   enabled:
-    - gh@2.57.0
+    - gh@2.58.0
   runtimes:
     - rust
 lint:
@@ -38,7 +38,7 @@ lint:
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version
-      direct_configs: [toolbox.toml] # // , log4rs.yaml]
+      direct_configs: [toolbox.toml, log4rs.yaml]
       affects_cache:
         - toolbox.toml
       environment:
@@ -54,19 +54,19 @@ lint:
         - tests/**
 
   enabled:
-    - osv-scanner@1.8.5
+    - osv-scanner@1.9.0
     - shellcheck@0.10.0
     - shfmt@3.6.0
     - trunk-toolbox@0.4.1
-    - checkov@3.2.255
-    - trufflehog@3.82.5
+    - checkov@3.2.257
+    - trufflehog@3.82.7
     - oxipng@9.1.2
     - yamllint@1.35.1
     - git-diff-check
     - taplo@0.9.3
-    - actionlint@1.7.2
+    - actionlint@1.7.3
     - clippy@1.76.0
-    - gitleaks@8.19.2
+    - gitleaks@8.20.1
     - markdownlint@0.42.0
     - prettier@3.3.3
     - rustfmt@1.76.0
