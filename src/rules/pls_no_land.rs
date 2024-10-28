@@ -4,16 +4,12 @@ extern crate regex;
 use crate::diagnostic;
 use crate::run::Run;
 use anyhow::Context;
-use log::warn;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use std::fs::File;
 use std::io::Read;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
-
-use std::thread::sleep;
-use std::time::Duration;
 
 lazy_static::lazy_static! {
     static ref DNL_RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
