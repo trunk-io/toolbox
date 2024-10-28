@@ -30,11 +30,12 @@ lint:
           run: ${workspace}/toolbox-latest --upstream=${upstream-ref} --cache-dir=${cachedir} --results=${tmpfile} ${target}
           output: sarif
           batch: true
-          cache_results: true
+          cache_results: false
           cache_ttl: 6h
           success_codes: [0]
           read_output_from: tmp_file
           disable_upstream: false
+          max_concurrency: 1
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version
