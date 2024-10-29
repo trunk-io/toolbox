@@ -1,8 +1,10 @@
 use assert_cmd::prelude::*;
 
+use serde_sarif::sarif::{Run, Sarif};
 use std::fmt;
 use std::fs;
 use std::process::Command;
+use tempfile::NamedTempFile;
 
 pub struct TestRepo {
     dir: tempfile::TempDir,
@@ -12,7 +14,69 @@ pub struct TestRepo {
 pub struct HortonOutput {
     pub stdout: String,
     pub stderr: String,
+    pub results: String, // results get written to tmp file and then read back in
     pub exit_code: Option<i32>,
+}
+
+impl HortonOutput {
+    pub fn runs(&self) -> Vec<Run> {
+        let sarif: Sarif = match serde_json::from_str(&self.results) {
+            Ok(s) => s,
+            Err(e) => panic!("Failed to parse stdout as SARIF: {}", e), // Panic if parsing fails
+        };
+
+        sarif.runs
+    }
+
+    pub fn has_result(&self, rule_id: &str, message: &str, file: Option<&str>) -> bool {
+        // Iterate over the runs and results to find the matching code and message
+        for run in self.runs() {
+            if let Some(results) = run.results {
+                for result in results {
+                    if result.rule_id.as_deref() == Some(rule_id) {
+                        if let Some(text) = result.message.text.as_deref() {
+                            if text.contains(message) {
+                                if file.is_some() {
+                                    if let Some(locations) = result.locations {
+                                        for location in locations {
+                                            if let Some(ph) = location.physical_location {
+                                                if let Some(fp) = ph.artifact_location {
+                                                    if let Some(f) = fp.uri {
+                                                        if f.contains(file.unwrap()) {
+                                                            return true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn has_result_with_rule_id(&self, rule_id: &str) -> bool {
+        // Iterate over the runs and results to find the matching code and message
+        for run in self.runs() {
+            if let Some(results) = run.results {
+                for result in results {
+                    if result.rule_id.as_deref() == Some(rule_id) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        false
+    }
 }
 
 impl fmt::Display for HortonOutput {
@@ -160,6 +224,11 @@ impl TestRepo {
             cmd.arg(path);
         }
 
+        // create a temporary file
+        let mut tmpfile = NamedTempFile::new()?;
+        let tmpfile_path = tmpfile.path().to_str().unwrap().to_string();
+        cmd.arg("--results").arg(tmpfile.path().to_str().unwrap());
+
         log::debug!("Command: {}", format!("{:?}", cmd));
 
         let output = cmd.output()?;
@@ -167,6 +236,7 @@ impl TestRepo {
         return Ok(HortonOutput {
             stdout: String::from_utf8(output.stdout)?,
             stderr: String::from_utf8(output.stderr)?,
+            results: fs::read_to_string(tmpfile_path)?,
             exit_code: output.status.code(),
         });
     }

@@ -58,8 +58,7 @@ fn assert_deleted_locked_file() -> anyhow::Result<()> {
     let horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout).contains("file is protected and should not be deleted");
-    assert_that(&horton.stdout).contains("src/locked/file.txt");
+    assert_that(&horton.has_result("never-edit-deleted", "src/locked/file.txt")).is_true();
 
     Ok(())
 }

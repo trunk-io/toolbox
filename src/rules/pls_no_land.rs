@@ -54,7 +54,7 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
 }
 
 fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
-    let config = &run.config;
+    let config: &crate::config::Conf = &run.config;
 
     if is_binary_file(path).unwrap_or(true) {
         log::debug!("Ignoring binary file {}", path.display());
