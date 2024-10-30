@@ -65,5 +65,5 @@ pub struct Run {
 impl Run {
     pub fn is_upstream(&self) -> bool {
         self.cache_dir.ends_with("-upstream")
-    }
+    }    
 }
