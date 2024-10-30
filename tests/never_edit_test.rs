@@ -28,8 +28,14 @@ fn assert_modified_locked_file() -> anyhow::Result<()> {
     let horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout).contains("file is protected and should not be modified");
-    assert_that(&horton.stdout.contains("src/write_many.txt")).is_false();
+    assert_that(&horton.has_result(
+        "never-edit-modified",
+        "file is protected and should not be modified",
+        Some("src/write_once.txt"),
+    ))
+    .is_true();
+    assert_that(&horton.has_result("never-edit-modified", "", Some("src/write_many.txt")))
+        .is_false();
 
     Ok(())
 }
@@ -58,7 +64,8 @@ fn assert_deleted_locked_file() -> anyhow::Result<()> {
     let horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.has_result("never-edit-deleted", "src/locked/file.txt")).is_true();
+    assert_that(&horton.has_result("never-edit-deleted", "", Some("src/locked/file.txt")))
+        .is_true();
 
     Ok(())
 }
@@ -71,8 +78,14 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
     test_repo.git_add_all()?;
     test_repo.git_commit_all("create locked and editable files");
 
+    let toml_on = r#"
+    [neveredit]
+    enabled = true
+    paths = ["src/locked/**"]
+"#;
+
     // enable and configure never_edit
-    let toml = r#"
+    let toml_off = r#"
     [neveredit]
     enabled = false
     paths = ["src/locked/**"]
@@ -81,13 +94,18 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
     // write to the protected file
     test_repo.delete("src/locked/file.txt");
 
-    test_repo.set_toolbox_toml(toml);
+    test_repo.set_toolbox_toml(toml_on);
+    let mut horton = test_repo.run_horton()?;
+    assert_that(&horton.has_result("never-edit-deleted", "", Some("src/locked/file.txt")))
+        .is_true();
 
-    let horton = test_repo.run_horton()?;
+    test_repo.set_toolbox_toml(toml_off);
+    horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout.contains("src/locked/file.txt")).is_false();
-    assert_that(&horton.stdout).contains("1 files processed");
+    assert_that(&horton.has_result("never-edit-deleted", "", Some("src/locked/file.txt")))
+        .is_false();
+    assert_that(&horton.has_result("toolbox-perf", "1 files processed", None)).is_true();
 
     Ok(())
 }
@@ -107,7 +125,6 @@ fn warn_for_config_not_protecting_anything() -> anyhow::Result<()> {
     let horton: integration_testing::HortonOutput = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout).contains("does not protect any existing files");
-
+    assert_that(&horton.has_result_with_rule_id("never-edit-bad-config")).is_true();
     Ok(())
 }

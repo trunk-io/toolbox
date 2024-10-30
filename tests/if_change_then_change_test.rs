@@ -23,7 +23,7 @@ fn assert_no_expected_changes(before: &str, after: &str) -> anyhow::Result<()> {
     assert_that(&horton.has_result(
         "if-change-then-change-this",
         "Expected change in constant.foo because revision.foo was modified",
-        "revision.foo",
+        Some("revision.foo"),
     ))
     .is_false();
 
@@ -44,6 +44,7 @@ fn assert_expected_change_in_constant_foo(before: &str, after: &str) -> anyhow::
     assert_that(&horton.has_result(
         "if-change-then-change-this",
         "Expected change in constant.foo because revision.foo was modified",
+        Some("revision.foo"),
     ))
     .is_true();
     Ok(())
@@ -329,8 +330,12 @@ fn assert_missing_ifchange() {
         test_repo.write("revision.foo", single_tag.as_bytes());
         let horton = test_repo.run_horton().unwrap();
         assert_that(&horton.exit_code).contains_value(0);
-        assert_that(&horton.has_result("if-change-mismatched", "Expected preceding IfChange tag"))
-            .is_true();
+        assert_that(&horton.has_result(
+            "if-change-mismatched",
+            "Expected preceding IfChange tag",
+            None,
+        ))
+        .is_true();
         assert_that(&horton.stdout).contains("");
     }
 

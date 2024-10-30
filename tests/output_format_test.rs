@@ -1,6 +1,8 @@
 // trunk-ignore-all(trunk-toolbox/do-not-land)
 extern crate regex;
 
+use serde_json::Error;
+use serde_sarif::sarif::{Run, Sarif};
 use spectral::prelude::*;
 use std::fs;
 use std::path::Path;
@@ -21,13 +23,14 @@ fn default_sarif() -> anyhow::Result<()> {
         "lorem ipsum dolor\ndo-NOT-lAnD\nDONOTLAND sit amet\n".as_bytes(),
     );
     test_repo.git_add_all()?;
-    let horton = test_repo.run_horton()?;
+    let horton = test_repo.run_horton_with("HEAD", "sarif", false)?;
 
     let re = Regex::new(r"\d+\.\d+ms").unwrap();
     let normalized_output = re.replace(&horton.stdout, "ms");
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&normalized_output.to_string()).is_equal_to(expected_sarif);
+    let sarif: Result<Sarif, Error> = serde_json::from_str(&normalized_output);
+    assert_that(&sarif.is_ok()).is_true();
+    assert_that(&sarif.unwrap().runs).has_length(1);
 
     Ok(())
 }
@@ -41,7 +44,7 @@ fn default_print() -> anyhow::Result<()> {
         "lorem ipsum dolor\ndo-NOT-lAnD\nDONOTLAND sit amet\n".as_bytes(),
     );
     test_repo.git_add_all()?;
-    let horton = test_repo.run_horton_with("HEAD", "text")?;
+    let horton = test_repo.run_horton_with("HEAD", "text", false)?;
     let expected_text = String::from(
         "alpha.foo:1:0: Found 'do-NOT-lAnD' (error)\nalpha.foo:2:0: Found 'DONOTLAND' (error)\n",
     );

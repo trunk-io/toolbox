@@ -50,9 +50,9 @@ impl HortonOutput {
                                             }
                                         }
                                     }
+                                } else {
+                                    return true;
                                 }
-                            } else {
-                                return true;
                             }
                         }
                     }
@@ -196,7 +196,7 @@ impl TestRepo {
     }
 
     pub fn run_horton(&self) -> anyhow::Result<HortonOutput> {
-        self.run_horton_with("HEAD", "sarif")
+        self.run_horton_with("HEAD", "sarif", true)
     }
 
     #[allow(dead_code)]
@@ -208,6 +208,7 @@ impl TestRepo {
         &self,
         upstream_ref: &str,
         format: &str,
+        write_results_to_file: bool,
     ) -> anyhow::Result<HortonOutput> {
         let mut cmd = Command::cargo_bin("trunk-toolbox")?;
 
@@ -224,19 +225,30 @@ impl TestRepo {
             cmd.arg(path);
         }
 
-        // create a temporary file
-        let mut tmpfile = NamedTempFile::new()?;
-        let tmpfile_path = tmpfile.path().to_str().unwrap().to_string();
-        cmd.arg("--results").arg(tmpfile.path().to_str().unwrap());
+        let tmpfile_path = if write_results_to_file {
+            // create a temporary file
+            let mut tmpfile = NamedTempFile::new()?;
+            let path = tmpfile.path().to_str().unwrap().to_string();
+            cmd.arg("--results").arg(tmpfile.path().to_str().unwrap());
+            path
+        } else {
+            String::new()
+        };
 
         log::debug!("Command: {}", format!("{:?}", cmd));
 
         let output = cmd.output()?;
 
+        let results = if write_results_to_file {
+            fs::read_to_string(tmpfile_path)?
+        } else {
+            String::new()
+        };
+
         return Ok(HortonOutput {
             stdout: String::from_utf8(output.stdout)?,
             stderr: String::from_utf8(output.stderr)?,
-            results: fs::read_to_string(tmpfile_path)?,
+            results,
             exit_code: output.status.code(),
         });
     }
