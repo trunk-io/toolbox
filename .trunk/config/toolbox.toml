@@ -1,14 +1,14 @@
 # Configuration for trunk toolbox. Generate default by calling 'trunk-toolbox genconfig'
 
 [ifchange]
-enabled = true
+enabled = false
 
 [donotland]
-enabled = true
+enabled = false
 
 [todo]
-enabled = true
+enabled = false
 
 [neveredit]
-enabled = true
+enabled = false
 paths = []
