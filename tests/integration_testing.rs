@@ -216,7 +216,6 @@ impl TestRepo {
             horton::git::modified_since(upstream_ref, Some(self.dir.path()))?.paths;
         let files: Vec<String> = modified_paths.keys().map(|key| key.to_string()).collect();
 
-        cmd.env("RUST_LOG", "debug");
         cmd.arg("--upstream")
             .arg(upstream_ref)
             .current_dir(self.dir.path());

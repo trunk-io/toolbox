@@ -186,10 +186,10 @@ fn init_default_logger() {
         )))
         .build();
 
-    // Build the log4rs configuration
+    // Build the log4rs configuration - log only errors to stdout by default
     let config = log4rs::Config::builder()
         .appender(Appender::builder().build("stdout", Box::new(stdout)))
-        .build(Root::builder().appender("stdout").build(LevelFilter::Debug))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Error))
         .expect("Failed to build log4rs configuration");
 
     log4rs::init_config(config).unwrap();
@@ -212,6 +212,7 @@ fn main() {
         }
     } else {
         init_default_logger();
+        debug!("using default built-in logging setup - no log4rs.yaml found");
     }
 
     match run() {
