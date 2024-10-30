@@ -36,11 +36,10 @@ lint:
           read_output_from: tmp_file
           disable_upstream: false
           max_concurrency: 1
-          direct_configs: [toolbox.toml]
+          direct_configs: [toolbox.toml, log4rs.yaml]
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version
-      direct_configs: [toolbox.toml, log4rs.yaml]
       affects_cache:
         - toolbox.toml
       environment:
