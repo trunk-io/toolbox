@@ -5,6 +5,7 @@ use glob::glob;
 use glob_match::glob_match;
 
 use log::debug;
+use log::trace;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::diagnostic;
@@ -24,6 +25,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
     let config = &run.config.neveredit;
 
     if !config.enabled {
+        trace!("'neveredit' is disabled");
         return Ok(vec![]);
     }
 
@@ -32,6 +34,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
     // We only emit config issues for the current run (not the upstream) so we can guarantee
     // that config issues get reported and not conceiled by HTL
     if config.paths.is_empty() && !run.is_upstream() {
+        trace!("'neveredit' no protected paths configured");
         diagnostics.push(diagnostic::Diagnostic {
             path: run.config_path.clone(),
             range: None,
@@ -45,7 +48,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
 
     // We only report diagnostic issues for config when not running as upstream
     if !run.is_upstream() {
-        debug!("verifying never edit rules");
+        debug!("verifying protected paths are valid and exist");
         for glob_path in &config.paths {
             let mut matches_something = false;
             match glob(glob_path) {

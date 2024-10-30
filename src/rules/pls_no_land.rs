@@ -4,7 +4,7 @@ extern crate regex;
 use crate::diagnostic;
 use crate::run::Run;
 use anyhow::Context;
-use log::debug;
+use log::{debug, trace};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use std::fs::File;
@@ -38,6 +38,8 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
 
     // Avoid opening the file if neither are enabled.
     if !dnl_config.enabled && !todo_config.enabled {
+        trace!("'donotland' is disabled");
+        trace!("'todo' is disabled");
         return Ok(vec![]);
     }
 
@@ -60,11 +62,12 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
     let config: &crate::config::Conf = &run.config;
 
     if is_binary_file(path).unwrap_or(true) {
-        log::debug!("Ignoring binary file {}", path.display());
+        debug!("ignoring binary file {}", path.display());
         return Ok(vec![]);
     }
 
     if is_ignored_file(path) {
+        debug!("ignoring ignored file {}", path.display());
         return Ok(vec![]);
     }
 
@@ -77,6 +80,8 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
     if first_line.is_empty() {
         return Ok(vec![]);
     }
+
+    trace!("scanning contents of {}", path.display());
 
     let first_line_view = String::from_utf8(first_line)
         .with_context(|| format!("could not read first line of {:#?}", path))?;

@@ -52,6 +52,8 @@ lazy_static::lazy_static! {
 pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
     let mut blocks: Vec<IctcBlock> = Vec::new();
 
+    trace!("scanning contents of {}", path.display());
+
     let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;
     let in_buf = BufReader::new(in_file);
 
@@ -116,6 +118,7 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
     let config = &run.config.ifchange;
 
     if !config.enabled {
+        trace!("'ifchange' is disabled");
         return Ok(vec![]);
     }
 
