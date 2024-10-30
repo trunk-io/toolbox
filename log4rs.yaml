@@ -12,7 +12,7 @@ appenders:
       pattern: "{d(%H:%M:%S)} | {({l}):5.5} | {f}:{L} | {m}{n}"
 
 root:
-  level: trace
+  level: error
   appenders:
     - stdout
 
