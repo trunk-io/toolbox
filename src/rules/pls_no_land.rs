@@ -54,7 +54,7 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
 }
 
 fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
-    let config = &run.config;
+    let config: &crate::config::Conf = &run.config;
 
     if is_binary_file(path).unwrap_or(true) {
         log::debug!("Ignoring binary file {}", path.display());
@@ -93,7 +93,7 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
         // those warnings on the current code and skip the upstream
         if !line.contains("trunk-ignore(|-begin|-end|-all)\\(trunk-toolbox/(do-not-land)\\)")
             && config.donotland.enabled
-            && !run.is_upstream
+            && !run.is_upstream()
         {
             if let Some(m) = DNL_RE.find(line) {
                 ret.push(diagnostic::Diagnostic {
@@ -111,6 +111,7 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
                     severity: diagnostic::Severity::Error,
                     code: "do-not-land".to_string(),
                     message: format!("Found '{}'", m.as_str()),
+                    replacements: None,
                 });
             }
         }
@@ -136,6 +137,7 @@ fn pls_no_land_impl(path: &PathBuf, run: &Run) -> anyhow::Result<Vec<diagnostic:
                     severity: diagnostic::Severity::Warning,
                     code: "todo".to_string(),
                     message: format!("Found '{}'", token),
+                    replacements: None,
                 });
             }
         }

@@ -30,19 +30,20 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
 
     // We only emit config issues for the current run (not the upstream) so we can guarantee
     // that config issues get reported and not conceiled by HTL
-    if config.paths.is_empty() && !run.is_upstream {
+    if config.paths.is_empty() && !run.is_upstream() {
         diagnostics.push(diagnostic::Diagnostic {
             path: run.config_path.clone(),
             range: None,
             severity: diagnostic::Severity::Warning,
             code: "never-edit-config".to_string(),
             message: "no protected paths provided in config".to_string(),
+            replacements: None,
         });
         return Ok(diagnostics);
     }
 
     // We only report diagnostic issues for config when not running as upstream
-    if !run.is_upstream {
+    if !run.is_upstream() {
         for glob_path in &config.paths {
             let mut matches_something = false;
             match glob(glob_path) {
@@ -63,6 +64,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                             severity: diagnostic::Severity::Warning,
                             code: "never-edit-bad-config".to_string(),
                             message: format!("{:?} does not protect any existing files", glob_path),
+                            replacements: None,
                         });
                     }
                 }
@@ -73,6 +75,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                         severity: diagnostic::Severity::Warning,
                         code: "never-edit-bad-config".to_string(),
                         message: format!("{:?} is not a valid glob pattern", glob_path),
+                        replacements: None,
                     });
                 }
             }
@@ -111,6 +114,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                         severity: diagnostic::Severity::Error,
                         code: "never-edit-modified".to_string(),
                         message: "file is protected and should not be modified".to_string(),
+                        replacements: None,
                     });
                 }
                 FileStatus::Deleted => {
@@ -120,6 +124,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                         severity: diagnostic::Severity::Warning,
                         code: "never-edit-deleted".to_string(),
                         message: "file is protected and should not be deleted".to_string(),
+                        replacements: None,
                     });
                 }
                 _ => {}
@@ -133,6 +138,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         severity: diagnostic::Severity::Note,
         code: "toolbox-perf".to_string(),
         message: format!("{:?} protected files checked", protected_files.len()),
+        replacements: None,
     });
 
     Ok(diagnostics)

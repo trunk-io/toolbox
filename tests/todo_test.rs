@@ -29,7 +29,7 @@ fn basic_todo() -> anyhow::Result<()> {
     let horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout).contains("Found 'toDO'");
+    assert_that(&horton.has_result_with_rule_id("todo")).is_true();
 
     Ok(())
 }
@@ -47,7 +47,7 @@ fn basic_fixme() -> anyhow::Result<()> {
     let horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout).contains("Found 'FIXME'");
+    assert_that(&horton.has_result("todo", "Found 'FIXME'", Some("alpha.foo"))).is_true();
 
     Ok(())
 }

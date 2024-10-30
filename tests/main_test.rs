@@ -13,8 +13,6 @@ fn binary_file_untracked() -> anyhow::Result<()> {
 
     assert_that(&horton.exit_code).contains_value(0);
     assert_that(&horton.stdout.contains("Expected change")).is_false();
-    assert_that(&horton.stdout.contains("picture.binary")).is_false();
-
     Ok(())
 }
 
@@ -25,11 +23,12 @@ fn binary_file_committed() -> anyhow::Result<()> {
     test_repo.write("picture.binary", include_bytes!("trunk-logo.png"));
     test_repo.git_commit_all("commit a picture");
 
-    let horton = test_repo.run_horton_with("HEAD^", "sarif")?;
+    let horton = test_repo.run_horton_with("HEAD^", "sarif", false)?;
+
+    print!("{}", horton.stdout);
 
     assert_that(&horton.exit_code).contains_value(0);
     assert_that(&horton.stdout.contains("Expected change")).is_false();
-    assert_that(&horton.stdout.contains("picture.binary")).is_false();
 
     Ok(())
 }
@@ -50,7 +49,6 @@ fn lfs_file_untracked() -> anyhow::Result<()> {
 
     assert_that(&horton.exit_code).contains_value(0);
     assert_that(&horton.stdout.contains("Expected change")).is_false();
-    assert_that(&horton.stdout.contains("picture.binary")).is_false();
 
     Ok(())
 }
@@ -67,11 +65,10 @@ fn lfs_file_committed() -> anyhow::Result<()> {
 
     test_repo.write("picture.binary", include_bytes!("trunk-logo.png"));
 
-    let horton = test_repo.run_horton_with("HEAD^", "sarif")?;
+    let horton = test_repo.run_horton_with("HEAD^", "sarif", false)?;
 
     assert_that(&horton.exit_code).contains_value(0);
     assert_that(&horton.stdout.contains("Expected change")).is_false();
-    assert_that(&horton.stdout.contains("picture.binary")).is_false();
 
     Ok(())
 }

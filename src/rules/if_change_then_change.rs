@@ -194,6 +194,7 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
                             severity: diagnostic::Severity::Warning,
                             code: "if-change-file-does-not-exist".to_string(),
                             message: format!("ThenChange {} does not exist", local_file.display(),),
+                            replacements: None,
                         });
                     }
                     // If target file was not changed raise issue
@@ -208,6 +209,7 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
                                 local_file.display(),
                                 block.path.display(),
                             ),
+                            replacements: None,
                         });
                     }
                 }
@@ -218,6 +220,7 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
                         severity: diagnostic::Severity::Warning,
                         code: "if-change-mismatched".to_string(),
                         message: "Expected preceding IfChange tag".to_string(),
+                        replacements: None,
                     });
                 }
                 ThenChange::MissingThen => {
@@ -227,13 +230,12 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
                         severity: diagnostic::Severity::Warning,
                         code: "if-change-mismatched".to_string(),
                         message: "Expected matching ThenChange tag".to_string(),
+                        replacements: None,
                     });
                 }
             }
         }
     }
-
-    debug!("ICTC blocks are:\n{:?}", blocks);
 
     Ok(diagnostics)
 }

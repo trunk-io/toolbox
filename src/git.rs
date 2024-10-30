@@ -1,6 +1,9 @@
+use chrono::{DateTime, FixedOffset};
 use git2::{AttrCheckFlags, AttrValue, Delta, DiffOptions, Repository};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::process::Output as ProcessOutput;
 
 #[derive(Debug, Clone)]
 pub struct Hunk {
@@ -27,6 +30,27 @@ pub struct FileChanges {
 
     /// Map of changed files and FileStatus
     pub paths: HashMap<String, FileStatus>,
+}
+
+pub struct Output {
+    pub status: std::process::ExitStatus,
+    pub stdout: String,
+    pub stderr: String,
+}
+
+pub struct Commit {
+    pub hash: String,
+    pub date: DateTime<FixedOffset>,
+}
+
+impl Output {
+    pub fn new(po: ProcessOutput) -> Self {
+        Self {
+            status: po.status,
+            stdout: String::from_utf8_lossy(&po.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&po.stderr).to_string(),
+        }
+    }
 }
 
 fn is_lfs(repo: &Repository, path: &Path) -> bool {
@@ -155,4 +179,73 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     }
 
     Ok(ret)
+}
+
+pub fn clone(repo_url: &str, destination: &Path) -> Output {
+    let output = Command::new("git")
+        .args([
+            "clone",
+            "--no-checkout",
+            "--bare",
+            "--filter=blob:none",
+            repo_url,
+            destination.to_string_lossy().as_ref(),
+        ])
+        .output()
+        .expect("Failed to execute git command");
+
+    Output::new(output)
+}
+
+pub fn status(dir: &PathBuf) -> Output {
+    let output = Command::new("git")
+        .args(["status", "--porcelain"])
+        .current_dir(dir)
+        .output()
+        .expect("Failed to execute git command");
+
+    Output::new(output)
+}
+
+pub fn dir_inside_git_repo(dir: &PathBuf) -> bool {
+    let output = Command::new("git")
+        .args(["rev-parse", "--is-inside-work-tree"])
+        .current_dir(dir)
+        .output()
+        .expect("Failed to execute git command");
+
+    output.status.success()
+}
+
+pub fn last_commit(dir: &PathBuf, file: &str) -> Result<Commit, String> {
+    let result = Command::new("git")
+        .args([
+            "--no-pager",
+            "log",
+            "-1",
+            "--pretty=format:%H%n%ci",
+            "--",
+            file,
+        ])
+        .current_dir(dir)
+        .output()
+        .expect("Failed to execute git command");
+
+    let output = Output::new(result);
+
+    if output.status.success() {
+        if output.stdout.is_empty() {
+            return Err("No file history found".to_string());
+        } else {
+            let mut lines: std::str::Lines<'_> = output.stdout.lines();
+            let hash = lines.next().ok_or("Missing hash").unwrap();
+            let date_str = lines.next().ok_or("Missing date").unwrap();
+
+            return Ok(Commit {
+                hash: hash.to_string(),
+                date: DateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S %z").unwrap(),
+            });
+        }
+    }
+    Err(output.stderr)
 }

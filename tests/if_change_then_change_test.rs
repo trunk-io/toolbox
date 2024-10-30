@@ -17,10 +17,15 @@ fn assert_no_expected_changes(before: &str, after: &str) -> anyhow::Result<()> {
     test_repo.write("revision.foo", after.as_bytes());
     let horton = test_repo.run_horton()?;
 
+    print!("{}", horton.stdout);
+
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout.contains("Expected change")).is_false();
-    assert_that(&horton.stdout.contains("constant.foo")).is_false();
-    assert_that(&horton.stdout.contains("revision.foo")).is_false();
+    assert_that(&horton.has_result(
+        "if-change-then-change-this",
+        "Expected change in constant.foo because revision.foo was modified",
+        Some("revision.foo"),
+    ))
+    .is_false();
 
     Ok(())
 }
@@ -36,9 +41,12 @@ fn assert_expected_change_in_constant_foo(before: &str, after: &str) -> anyhow::
     let horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout)
-        .contains("Expected change in constant.foo because revision.foo was modified");
-
+    assert_that(&horton.has_result(
+        "if-change-then-change-this",
+        "Expected change in constant.foo because revision.foo was modified",
+        Some("revision.foo"),
+    ))
+    .is_true();
     Ok(())
 }
 
@@ -270,14 +278,24 @@ fn assert_missing_thenchange() {
         test_repo.write("revision.foo", single_tag.as_bytes());
         let horton = test_repo.run_horton().unwrap();
         assert_that(&horton.exit_code).contains_value(0);
-        assert_that(&horton.stdout).contains("Expected matching ThenChange tag");
+        assert_that(&horton.has_result(
+            "if-change-mismatched",
+            "Expected matching ThenChange tag",
+            None,
+        ))
+        .is_true();
     }
 
     {
         test_repo.write("revision.foo", multi_tag.as_bytes());
         let horton = test_repo.run_horton().unwrap();
         assert_that(&horton.exit_code).contains_value(0);
-        assert_that(&horton.stdout).contains("Expected matching ThenChange tag");
+        assert_that(&horton.has_result(
+            "if-change-mismatched",
+            "Expected matching ThenChange tag",
+            None,
+        ))
+        .is_true();
     }
 }
 
@@ -312,14 +330,25 @@ fn assert_missing_ifchange() {
         test_repo.write("revision.foo", single_tag.as_bytes());
         let horton = test_repo.run_horton().unwrap();
         assert_that(&horton.exit_code).contains_value(0);
-        assert_that(&horton.stdout).contains("Expected preceding IfChange tag");
+        assert_that(&horton.has_result(
+            "if-change-mismatched",
+            "Expected preceding IfChange tag",
+            None,
+        ))
+        .is_true();
+        assert_that(&horton.stdout).contains("");
     }
 
     {
         test_repo.write("revision.foo", multi_tag.as_bytes());
         let horton = test_repo.run_horton().unwrap();
         assert_that(&horton.exit_code).contains_value(0);
-        assert_that(&horton.stdout).contains("Expected preceding IfChange tag");
+        assert_that(&horton.has_result(
+            "if-change-mismatched",
+            "Expected preceding IfChange tag",
+            None,
+        ))
+        .is_true();
     }
 }
 
@@ -343,7 +372,12 @@ fn assert_localfile_notfound() {
         test_repo.write("revision.foo", missing_file.as_bytes());
         let horton = test_repo.run_horton().unwrap();
         assert_that(&horton.exit_code).contains_value(0);
-        assert_that(&horton.stdout).contains("ThenChange zee.foo does not exist");
+        assert_that(&horton.has_result(
+            "if-change-file-does-not-exist",
+            "ThenChange zee.foo does not exist",
+            None,
+        ))
+        .is_true();
     }
 }
 

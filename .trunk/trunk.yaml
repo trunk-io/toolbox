@@ -2,7 +2,7 @@ version: 0.1
 plugins:
   sources:
     - id: trunk
-      ref: v1.6.2
+      ref: v1.6.3
       uri: https://github.com/trunk-io/plugins
 runtimes:
   enabled:
@@ -11,13 +11,13 @@ runtimes:
     - node@18.12.1
     - rust@1.76.0
 cli:
-  version: 1.22.3
+  version: 1.22.6
 api:
   address: api.trunk-staging.io:8443
 
 tools:
   enabled:
-    - gh@2.55.0
+    - gh@2.58.0
   runtimes:
     - rust
 lint:
@@ -30,22 +30,33 @@ lint:
           run: ${workspace}/toolbox-latest --upstream=${upstream-ref} --cache-dir=${cachedir} --results=${tmpfile} ${target}
           output: sarif
           batch: true
+          cache_results: false
+          cache_ttl: 6h
           success_codes: [0]
           read_output_from: tmp_file
           disable_upstream: false
+          max_concurrency: 1
           direct_configs: [toolbox.toml]
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version
+      direct_configs: [toolbox.toml, log4rs.yaml]
+      affects_cache:
+        - toolbox.toml
       environment:
         - name: PATH
-          list: ["${linter}"]
+          list: ["${linter}", "${env.PATH}"]
+        - name: debug_path
+          value: "${workspace}/target/debug/trunk-toolbox"
+        - name: release_path
+          value: "${workspace}/target/release/trunk-toolbox"
   ignore:
     - linters: [trunk-toolbox]
       paths:
         - tests/**
 
   enabled:
+    - osv-scanner@1.9.0
     - shellcheck@0.10.0
     - shfmt@3.6.0
     - trunk-toolbox@0.3.2
@@ -55,10 +66,10 @@ lint:
     - yamllint@1.35.1
     - git-diff-check
     - taplo@0.9.3
-    - actionlint@1.7.1
+    - actionlint@1.7.3
     - clippy@1.76.0
-    - gitleaks@8.18.4
-    - markdownlint@0.41.0
+    - gitleaks@8.20.1
+    - markdownlint@0.42.0
     - prettier@3.3.3
     - rustfmt@1.76.0
 actions:

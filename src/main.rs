@@ -7,9 +7,18 @@ use horton::rules::never_edit::never_edit;
 use horton::rules::pls_no_land::pls_no_land;
 use horton::run::{Cli, OutputFormat, Run, Subcommands};
 
+use log::{debug, warn};
 use serde_sarif::sarif;
+use std::env;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
+
+use log::LevelFilter;
+use log4rs::{
+    append::console::ConsoleAppender,
+    config::{Appender, Root},
+    encode::pattern::PatternEncoder,
+};
 
 fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
     return original_results
@@ -38,51 +47,22 @@ fn generate_sarif_string(
     let mut results: Vec<sarif::Result> = original_results
         .diagnostics
         .iter()
-        .map(|d| {
-            let mut physical_location = sarif::PhysicalLocationBuilder::default();
-            physical_location.artifact_location(
-                sarif::ArtifactLocationBuilder::default()
-                    .uri(d.path.clone())
-                    .build()
-                    .unwrap(),
-            );
-
-            if let Some(range) = &d.range {
-                physical_location.region(
-                    sarif::RegionBuilder::default()
-                        .start_line(range.start.line as i64 + 1)
-                        .start_column(range.start.character as i64 + 1)
-                        .end_line(range.end.line as i64 + 1)
-                        .end_column(range.end.character as i64 + 1)
-                        .build()
-                        .unwrap(),
-                );
-            }
-            sarif::ResultBuilder::default()
-                .level(d.severity.to_string())
-                .locations([sarif::LocationBuilder::default()
-                    .physical_location(physical_location.build().unwrap())
-                    .build()
-                    .unwrap()])
-                .message(
-                    sarif::MessageBuilder::default()
-                        .text(d.message.clone())
-                        .build()
-                        .unwrap(),
-                )
-                .rule_id(d.code.clone())
-                .build()
-                .unwrap()
-        })
+        .map(|d| d.to_sarif())
         .collect();
 
     let r = sarif::ResultBuilder::default()
         .message(
             sarif::MessageBuilder::default()
                 .text(format!(
-                    "{:?} files processed in {:?}",
+                    "{:?} files processed in {:?} files:[{}]",
                     run_context.paths.len(),
                     start_time.elapsed(),
+                    run_context
+                        .paths
+                        .iter()
+                        .map(|p| p.to_string_lossy())
+                        .collect::<Vec<_>>()
+                        .join(", ")
                 ))
                 .build()
                 .unwrap(),
@@ -160,7 +140,7 @@ fn run() -> anyhow::Result<()> {
         paths: cli.files.into_iter().map(PathBuf::from).collect(),
         config,
         config_path: toolbox_toml,
-        is_upstream: cli.cache_dir.ends_with("-upstream"),
+        cache_dir: cli.cache_dir.clone(),
     };
 
     let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
@@ -198,8 +178,41 @@ fn run() -> anyhow::Result<()> {
     Ok(())
 }
 
+fn init_default_logger() {
+    // Create a console appender for stdout
+    let stdout = ConsoleAppender::builder()
+        .encoder(Box::new(PatternEncoder::new(
+            "{d(%H:%M:%S)} | {({l}):5.5} | {f}:{L} | {m}{n}",
+        )))
+        .build();
+
+    // Build the log4rs configuration
+    let config = log4rs::Config::builder()
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Debug))
+        .expect("Failed to build log4rs configuration");
+
+    log4rs::init_config(config).unwrap();
+}
+
 fn main() {
-    env_logger::init();
+    // initialize logging from file if log4rs.yaml exists
+    let current_dir = env::current_dir().expect("Failed to get current directory");
+    let log_config_path = current_dir.join("log4rs.yaml");
+    if log_config_path.exists() {
+        match log4rs::init_file(&log_config_path, Default::default()) {
+            Ok(_) => {
+                // Initialization succeeded
+                debug!("logging initialized - {:?}", log_config_path);
+            }
+            Err(e) => {
+                init_default_logger();
+                warn!("Falling back to default logging setup. override with valid 'log4rs.yaml' file, {}", e);
+            }
+        }
+    } else {
+        init_default_logger();
+    }
 
     match run() {
         Ok(_) => (),
