@@ -1,6 +1,6 @@
 use crate::run::Run;
 use anyhow::Context;
-use log::debug;
+use log::trace;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -236,6 +236,8 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
             }
         }
     }
+
+    trace!("ICTC blocks are:\n{:?}", blocks);
 
     Ok(diagnostics)
 }
