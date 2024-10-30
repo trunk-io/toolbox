@@ -4,6 +4,7 @@ extern crate regex;
 use crate::diagnostic;
 use crate::run::Run;
 use anyhow::Context;
+use log::debug;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use std::fs::File;
@@ -39,6 +40,8 @@ pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     if !dnl_config.enabled && !todo_config.enabled {
         return Ok(vec![]);
     }
+
+    debug!("scanning {} files for pls_no_land", run.paths.len());
 
     // Scan files in parallel
     let results: Result<Vec<_>, _> = run

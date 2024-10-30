@@ -1,6 +1,6 @@
 use crate::run::Run;
 use anyhow::Context;
-use log::trace;
+use log::{debug, trace};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -118,6 +118,11 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
     if !config.enabled {
         return Ok(vec![]);
     }
+
+    debug!(
+        "scanning {} files for if_change_then_change",
+        run.paths.len()
+    );
 
     // Build up list of files that actually have a ifchange block - this way we can avoid
     // processing git modified chunks if none are present

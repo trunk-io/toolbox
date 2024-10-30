@@ -4,6 +4,7 @@ use crate::run::Run;
 use glob::glob;
 use glob_match::glob_match;
 
+use log::debug;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::diagnostic;
@@ -44,6 +45,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
 
     // We only report diagnostic issues for config when not running as upstream
     if !run.is_upstream() {
+        debug!("verifying never edit rules");
         for glob_path in &config.paths {
             let mut matches_something = false;
             match glob(glob_path) {
@@ -102,6 +104,11 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         return Ok(diagnostics);
     }
 
+    debug!(
+        "tool configured for {} protected files",
+        protected_files.len()
+    );
+
     let modified = git::modified_since(upstream, None)?;
 
     for protected_file in &protected_files {
@@ -136,7 +143,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         path: "".to_string(),
         range: None,
         severity: diagnostic::Severity::Note,
-        code: "toolbox-perf".to_string(),
+        code: "toolbox-never-edit-perf".to_string(),
         message: format!("{:?} protected files checked", protected_files.len()),
         replacements: None,
     });
