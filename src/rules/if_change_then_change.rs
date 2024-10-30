@@ -1,6 +1,6 @@
 use crate::run::Run;
 use anyhow::Context;
-use log::trace;
+use log::{debug, trace};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -51,6 +51,8 @@ lazy_static::lazy_static! {
 
 pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
     let mut blocks: Vec<IctcBlock> = Vec::new();
+
+    trace!("scanning contents of {}", path.display());
 
     let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;
     let in_buf = BufReader::new(in_file);
@@ -116,8 +118,14 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
     let config = &run.config.ifchange;
 
     if !config.enabled {
+        trace!("'ifchange' is disabled");
         return Ok(vec![]);
     }
+
+    debug!(
+        "scanning {} files for if_change_then_change",
+        run.paths.len()
+    );
 
     // Build up list of files that actually have a ifchange block - this way we can avoid
     // processing git modified chunks if none are present

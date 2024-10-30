@@ -2,21 +2,15 @@
 extern crate regex;
 
 use serde_json::Error;
-use serde_sarif::sarif::{Run, Sarif};
+use serde_sarif::sarif::Sarif;
 use spectral::prelude::*;
-use std::fs;
-use std::path::Path;
 
-use regex::Regex;
 mod integration_testing;
 use integration_testing::TestRepo;
 
 #[test]
 fn default_sarif() -> anyhow::Result<()> {
     let test_repo = TestRepo::make()?;
-
-    let expected_file = Path::new(file!()).parent().unwrap().join("output.sarif");
-    let expected_sarif = fs::read_to_string(expected_file)?;
 
     test_repo.write(
         "alpha.foo",
@@ -25,10 +19,7 @@ fn default_sarif() -> anyhow::Result<()> {
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton_with("HEAD", "sarif", false)?;
 
-    let re = Regex::new(r"\d+\.\d+ms").unwrap();
-    let normalized_output = re.replace(&horton.stdout, "ms");
-
-    let sarif: Result<Sarif, Error> = serde_json::from_str(&normalized_output);
+    let sarif: Result<Sarif, Error> = serde_json::from_str(&horton.stdout);
     assert_that(&sarif.is_ok()).is_true();
     assert_that(&sarif.unwrap().runs).has_length(1);
 

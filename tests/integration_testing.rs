@@ -19,6 +19,7 @@ pub struct HortonOutput {
 }
 
 impl HortonOutput {
+    #[allow(dead_code)]
     pub fn runs(&self) -> Vec<Run> {
         let sarif: Sarif = match serde_json::from_str(&self.results) {
             Ok(s) => s,
@@ -28,6 +29,7 @@ impl HortonOutput {
         sarif.runs
     }
 
+    #[allow(dead_code)]
     pub fn has_result(&self, rule_id: &str, message: &str, file: Option<&str>) -> bool {
         // Iterate over the runs and results to find the matching code and message
         for run in self.runs() {
@@ -63,6 +65,7 @@ impl HortonOutput {
         false
     }
 
+    #[allow(dead_code)]
     pub fn has_result_with_rule_id(&self, rule_id: &str) -> bool {
         // Iterate over the runs and results to find the matching code and message
         for run in self.runs() {
@@ -195,6 +198,7 @@ impl TestRepo {
         assert!(output.status.success(), "Git commit failed");
     }
 
+    #[allow(dead_code)]
     pub fn run_horton(&self) -> anyhow::Result<HortonOutput> {
         self.run_horton_with("HEAD", "sarif", true)
     }
@@ -216,7 +220,6 @@ impl TestRepo {
             horton::git::modified_since(upstream_ref, Some(self.dir.path()))?.paths;
         let files: Vec<String> = modified_paths.keys().map(|key| key.to_string()).collect();
 
-        cmd.env("RUST_LOG", "debug");
         cmd.arg("--upstream")
             .arg(upstream_ref)
             .current_dir(self.dir.path());
@@ -227,7 +230,7 @@ impl TestRepo {
 
         let tmpfile_path = if write_results_to_file {
             // create a temporary file
-            let mut tmpfile = NamedTempFile::new()?;
+            let tmpfile = NamedTempFile::new()?;
             let path = tmpfile.path().to_str().unwrap().to_string();
             cmd.arg("--results").arg(tmpfile.path().to_str().unwrap());
             path
