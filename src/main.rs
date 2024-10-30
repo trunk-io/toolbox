@@ -11,6 +11,7 @@ use log::{debug, warn};
 use serde_sarif::sarif;
 use std::env;
 use std::path::{Path, PathBuf};
+use std::thread::sleep;
 use std::time::Instant;
 
 use log::LevelFilter;
@@ -19,6 +20,8 @@ use log4rs::{
     config::{Appender, Root},
     encode::pattern::PatternEncoder,
 };
+
+use std::time::Duration;
 
 fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
     return original_results
@@ -155,6 +158,9 @@ fn run() -> anyhow::Result<()> {
         Ok(result) => ret.diagnostics.extend(result),
         Err(e) => return Err(e),
     }
+
+    // Sleep for 400 milliseconds
+    sleep(Duration::from_millis(400));
 
     //TODO: refactor this to use a threadpool for all the rules. using rayon::join() won't scale
     //beyond two things
