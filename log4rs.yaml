@@ -15,9 +15,4 @@ root:
   level: error
   appenders:
     - stdout
-
-loggers:
-  step:
-    level: trace
-    appenders:
-      - file
+    - file
