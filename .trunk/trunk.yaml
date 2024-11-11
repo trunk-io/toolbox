@@ -32,6 +32,7 @@ lint:
           batch: true
           success_codes: [0]
           read_output_from: tmp_file
+          cache_results: true
           disable_upstream: false
           max_concurrency: 1
           direct_configs: [toolbox.toml, log4rs.yaml]

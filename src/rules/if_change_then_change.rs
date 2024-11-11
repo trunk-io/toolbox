@@ -126,6 +126,11 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
         return Ok(vec![]);
     }
 
+    if run.is_upstream() {
+        trace!("'if-change' rule doesn't run on upstream");
+        return Ok(vec![]);
+    }
+
     debug!(
         "scanning {} files for if_change_then_change",
         run.paths.len()
