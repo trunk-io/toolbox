@@ -1,14 +1,13 @@
 use crate::run::Run;
 use anyhow::Context;
-use log::{debug, trace};
+use log::{debug, trace, warn};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::path::PathBuf;
-
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use regex::Regex;
 
 use crate::diagnostic;
 use crate::git;
@@ -54,7 +53,12 @@ pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
 
     trace!("scanning contents of {}", path.display());
 
-    let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;
+    let in_file = File::open(path).with_context(|| {
+        let error_message = format!("failed to open: {:#?}", path);
+        warn!("{}", error_message);
+        error_message
+    })?;
+
     let in_buf = BufReader::new(in_file);
 
     let mut block: Option<IctcBlock> = None;
