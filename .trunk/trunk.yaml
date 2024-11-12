@@ -35,12 +35,11 @@ lint:
           cache_results: true
           disable_upstream: false
           max_concurrency: 1
-          direct_configs: [toolbox.toml, log4rs.yaml]
+          direct_configs: [toolbox.toml]
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version
-      affects_cache:
-        - toolbox.toml
+      affects_cache: [toolbox.toml, log4rs.yaml]
       environment:
         - name: PATH
           list: ["${linter}", "${env.PATH}"]
