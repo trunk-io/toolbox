@@ -12,3 +12,6 @@ enabled = false
 [neveredit]
 enabled = false
 paths = []
+
+[nocurlyquotes]
+enabled = true
