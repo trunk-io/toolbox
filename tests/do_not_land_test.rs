@@ -16,7 +16,8 @@ fn basic() -> anyhow::Result<()> {
     let horton = test_repo.run_horton()?;
 
     assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout).contains("Found 'do-NOT-lAnD'");
+    assert_that(&horton.has_result("do-not-land", "Found 'do-NOT-lAnD'", Some("alpha.foo")))
+        .is_true();
 
     Ok(())
 }
@@ -28,30 +29,10 @@ fn binary_files_ignored() -> anyhow::Result<()> {
     test_repo.write("alpha.foo.binary", include_bytes!("trunk-logo.png"));
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
-    let result: serde_json::Value = serde_json::from_str(&horton.stdout)?;
-    let runs = result
-        .as_object()
-        .unwrap()
-        .get("runs")
-        .unwrap()
-        .as_array()
-        .unwrap();
 
-    assert_eq!(runs.len(), 1);
+    assert_that(&horton.runs()).has_length(1);
+    assert_that(&horton.has_result_with_rule_id("do-not-land")).is_false();
 
-    assert_eq!(
-        runs.get(0)
-            .unwrap()
-            .get("results")
-            .unwrap()
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter(|r| r.get("level").unwrap() != "note")
-            .collect::<Vec<_>>()
-            .is_empty(),
-        true
-    );
     Ok(())
 }
 
@@ -63,7 +44,7 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
 
     {
         let horton = test_repo.run_horton()?;
-        assert_that(&horton.stdout).contains("Found 'do-not-land'");
+        assert_that(&horton.has_result_with_rule_id("do-not-land")).is_true();
     }
 
     let config = r#"
@@ -75,7 +56,7 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
     test_repo.write("toolbox.toml", config.as_bytes());
     {
         let horton = test_repo.run_horton().unwrap();
-        assert_that(&horton.stdout.contains("Found 'do-not-land'")).is_false();
+        assert_that(&horton.has_result_with_rule_id("do-not-land")).is_false();
     }
 
     Ok(())

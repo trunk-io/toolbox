@@ -1,10 +1,15 @@
 use chrono::{DateTime, FixedOffset};
 use git2::{AttrCheckFlags, AttrValue, Delta, DiffOptions, Repository};
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::Output as ProcessOutput;
+<<<<<<< HEAD
 
+=======
+use std::sync::Mutex;
+>>>>>>> main
 #[derive(Debug, Clone)]
 pub struct Hunk {
     pub path: PathBuf,
@@ -52,17 +57,34 @@ impl Output {
         }
     }
 }
+lazy_static! {
+    static ref LFS_CACHE: Mutex<HashMap<String, bool>> = Mutex::new(HashMap::new());
+}
 
 fn is_lfs(repo: &Repository, path: &Path) -> bool {
+    let path_str = path.to_string_lossy().to_string();
+
+    // Check the cache first
+    if let Some(&cached_result) = LFS_CACHE.lock().unwrap().get(&path_str) {
+        return cached_result;
+    }
+
     // "filter" is the primary LFS attribute, see gitattributes(5)
     // FILE_THEN_INDEX checks working tree then index; mimics git itself
     // https://github.com/libgit2/libgit2/blob/v1.5.0/include/git2/attr.h#L104-L116
-    if let Ok(filter_bytes) = repo.get_attr_bytes(path, "filter", AttrCheckFlags::FILE_THEN_INDEX) {
+    let result = if let Ok(filter_bytes) =
+        repo.get_attr_bytes(path, "filter", AttrCheckFlags::FILE_THEN_INDEX)
+    {
         let filter = AttrValue::from_bytes(filter_bytes);
         filter.eq(&AttrValue::from_string(Some("lfs")))
     } else {
         false
-    }
+    };
+
+    // Store the result in the cache
+    LFS_CACHE.lock().unwrap().insert(path_str, result);
+
+    result
 }
 
 pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Result<FileChanges> {
@@ -106,7 +128,7 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     let mut ret = FileChanges::default();
     let mut maybe_current_hunk: Option<Hunk> = None;
     diff.foreach(
-        &mut |delta, _| {
+        &mut |delta: git2::DiffDelta<'_>, _| {
             if let Some(path) = delta.new_file().path() {
                 if !is_lfs(&repo, path) {
                     match delta.status() {
@@ -132,13 +154,13 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
         None,
         Some(&mut |delta, _, line| {
             if let Some(path) = delta.new_file().path() {
-                if !is_lfs(&repo, path) {
-                    match delta.status() {
-                        Delta::Added
-                        | Delta::Copied
-                        | Delta::Untracked
-                        | Delta::Modified
-                        | Delta::Renamed => {
+                match delta.status() {
+                    Delta::Added
+                    | Delta::Copied
+                    | Delta::Untracked
+                    | Delta::Modified
+                    | Delta::Renamed => {
+                        if !is_lfs(&repo, path) {
                             if let Some(new_lineno) = line.new_lineno() {
                                 if line.old_lineno().is_none() {
                                     maybe_current_hunk = maybe_current_hunk
@@ -161,13 +183,13 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
                                 }
                             }
                         }
-                        Delta::Unmodified
-                        | Delta::Deleted
-                        | Delta::Ignored
-                        | Delta::Typechange
-                        | Delta::Unreadable
-                        | Delta::Conflicted => (),
                     }
+                    Delta::Unmodified
+                    | Delta::Deleted
+                    | Delta::Ignored
+                    | Delta::Typechange
+                    | Delta::Unreadable
+                    | Delta::Conflicted => (),
                 }
             }
             true

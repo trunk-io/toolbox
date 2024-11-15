@@ -136,6 +136,11 @@ enabled = true
 paths = ["**/write_once*"]
 ```
 
+### Debugging Toolbox
+
+Starting with release 0.5.0 toolbox now supports logging configuration using log4rs.yaml. toolbox will attempt to load this file from 
+the currently executing directory. An example of this file is in the root directory of this repo. 
+
 ### Disclaimer
 
 We know, we know...toolbox? That's only one step above 'UTILS', but a toolbox is a real thing, you can buy one in a store and put all kind of interesting things inside of them that make doing work a lot easier. Have you ever tried to change a wall socket without a screwdriver? We have...and it's not fun.

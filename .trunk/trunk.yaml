@@ -34,14 +34,14 @@ lint:
           cache_ttl: 6h
           success_codes: [0]
           read_output_from: tmp_file
+          cache_results: true
           disable_upstream: false
           max_concurrency: 1
+          direct_configs: [toolbox.toml]
       version_command:
         parse_regex: ${semver}
         run: trunk-toolbox --version
-      direct_configs: [toolbox.toml, log4rs.yaml]
-      affects_cache:
-        - toolbox.toml
+      affects_cache: [toolbox.toml, log4rs.yaml]
       environment:
         - name: PATH
           list: ["${linter}", "${env.PATH}"]
@@ -58,9 +58,15 @@ lint:
     - osv-scanner@1.9.0
     - shellcheck@0.10.0
     - shfmt@3.6.0
+<<<<<<< HEAD
     - trunk-toolbox@0.4.1
     - checkov@3.2.257
     - trufflehog@3.82.7
+=======
+    - trunk-toolbox@0.3.2
+    - checkov@3.2.238
+    - trufflehog@3.81.9
+>>>>>>> main
     - oxipng@9.1.2
     - yamllint@1.35.1
     - git-diff-check
