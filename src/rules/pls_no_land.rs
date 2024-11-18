@@ -12,9 +12,6 @@ use std::io::Read;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
-use std::thread::sleep;
-use std::time::Duration;
-
 lazy_static::lazy_static! {
     static ref DNL_RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
     static ref TODO_RE: Regex = Regex::new(r"(?i)(TODO|FIXME)(\W+.*)?$").unwrap();

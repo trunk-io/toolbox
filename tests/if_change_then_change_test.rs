@@ -1,5 +1,4 @@
 use confique::{Config, Partial};
-use horton::config::confique_partial_if_change_conf::PartialIfChangeConf;
 use horton::config::Conf;
 use horton::diagnostic::{Position, Range};
 use horton::run::Run;
@@ -564,7 +563,7 @@ fn remote_repo_update_hash() {
 
     assert_that(&replacement.deleted_region.start.character).is_equal_to(40);
     assert_that(&replacement.deleted_region.end.character).is_equal_to(47);
-    assert_that(&replacement.inserted_content.len()).is_equal_to(40);
+    assert_that(&replacement.inserted_content.len()).is_equal_to(10);
 
     let sarif = diag.to_sarif();
     assert!(

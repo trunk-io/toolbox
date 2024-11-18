@@ -220,14 +220,14 @@ impl<'a> Ictc<'a> {
             return Ok(vec![]);
         }
 
-        if run.is_upstream() {
+        if self.run.is_upstream() {
             trace!("'if-change' rule doesn't run on upstream");
             return Ok(vec![]);
         }
 
         debug!(
             "scanning {} files for if_change_then_change",
-            run.paths.len()
+            self.run.paths.len()
         );
 
         // Build up list of files that actually have a ifchange block - this way we can avoid
@@ -302,11 +302,12 @@ impl<'a> Ictc<'a> {
                     }
                     _ => self.thenchange(block, &blocks_by_path),
                 }
+            } else {
+                self.thenchange(block, &blocks_by_path);
             }
         }
 
         log::trace!("ICTC blocks are:\n{:?}", blocks);
-
         Ok(self.diagnostics.clone())
     }
 
@@ -460,6 +461,7 @@ impl<'a> Ictc<'a> {
                     }
                 }
                 ThenChange::MissingIf => {
+                    trace!("MissingIf processing...");
                     self.diagnostics.push(Diagnostic {
                         path: block.path.to_str().unwrap().to_string(),
                         range: Some(block.get_range()),
