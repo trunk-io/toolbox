@@ -214,10 +214,7 @@ fn main() {
         }
     } else {
         init_default_logger();
-<<<<<<< HEAD
-=======
         debug!("using default built-in logging setup - no log4rs.yaml found");
->>>>>>> main
     }
 
     match run() {

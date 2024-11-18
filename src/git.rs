@@ -5,11 +5,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::Output as ProcessOutput;
-<<<<<<< HEAD
-
-=======
 use std::sync::Mutex;
->>>>>>> main
 #[derive(Debug, Clone)]
 pub struct Hunk {
     pub path: PathBuf,

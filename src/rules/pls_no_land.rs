@@ -4,11 +4,7 @@ extern crate regex;
 use crate::diagnostic;
 use crate::run::Run;
 use anyhow::Context;
-<<<<<<< HEAD
-use log::warn;
-=======
 use log::{debug, trace};
->>>>>>> main
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use std::fs::File;
