@@ -94,7 +94,7 @@ impl Diagnostic {
                 .physical_location(physical_location.build().unwrap())
                 .build()
                 .unwrap()])
-            .fixes(fixes.unwrap_or_else(Vec::new))
+            .fixes(fixes.unwrap_or_default())
             .message(
                 sarif::MessageBuilder::default()
                     .text(self.message.clone())
