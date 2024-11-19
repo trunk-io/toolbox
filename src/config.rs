@@ -15,6 +15,9 @@ pub struct Conf {
 
     #[config(nested)]
     pub neveredit: NeverEditConf,
+
+    #[config(nested)]
+    pub nocurlyquotes: NoCurlyQuotesConf,
 }
 
 impl Conf {
@@ -48,4 +51,10 @@ pub struct NeverEditConf {
     pub enabled: bool,
     #[config(default = [])]
     pub paths: Vec<String>,
+}
+
+#[derive(Config)]
+pub struct NoCurlyQuotesConf {
+    #[config(default = true)]
+    pub enabled: bool,
 }
