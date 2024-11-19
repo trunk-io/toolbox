@@ -55,6 +55,6 @@ pub struct NeverEditConf {
 
 #[derive(Config)]
 pub struct NoCurlyQuotesConf {
-    #[config(default = true)]
+    #[config(default = false)]
     pub enabled: bool,
 }
