@@ -83,11 +83,7 @@ impl Diagnostic {
         }
 
         let fixes = if let Some(replacements) = &self.replacements {
-            let mut fixes = Vec::new();
-            for replacement in replacements {
-                fixes.push(replacement.to_fix(self));
-            }
-            Some(fixes)
+            Some(vec![self.build_fix(replacements)])
         } else {
             None
         };
@@ -98,7 +94,7 @@ impl Diagnostic {
                 .physical_location(physical_location.build().unwrap())
                 .build()
                 .unwrap()])
-            .fixes(fixes.unwrap_or_default())
+            .fixes(fixes.unwrap_or_else(Vec::new))
             .message(
                 sarif::MessageBuilder::default()
                     .text(self.message.clone())
@@ -109,36 +105,45 @@ impl Diagnostic {
             .build()
             .unwrap()
     }
-}
 
-impl Replacement {
-    pub fn to_fix(&self, diag: &Diagnostic) -> sarif::Fix {
+    pub fn build_fix(&self, replacements: &[Replacement]) -> sarif::Fix {
         sarif::FixBuilder::default()
             .artifact_changes([sarif::ArtifactChangeBuilder::default()
                 .artifact_location(
                     sarif::ArtifactLocationBuilder::default()
-                        .uri(diag.path.clone())
+                        .uri(self.path.clone())
                         .build()
                         .unwrap(),
                 )
-                .replacements(vec![sarif::ReplacementBuilder::default()
-                    .deleted_region(
-                        sarif::RegionBuilder::default()
-                            .start_line(self.deleted_region.start.line as i64)
-                            .start_column(self.deleted_region.start.character as i64 + 1)
-                            .end_line(self.deleted_region.end.line as i64)
-                            .end_column(self.deleted_region.end.character as i64 + 1)
-                            .build()
-                            .unwrap(),
-                    )
-                    .inserted_content(
-                        sarif::ArtifactContentBuilder::default()
-                            .text(self.inserted_content.clone())
-                            .build()
-                            .unwrap(),
-                    )
-                    .build()
-                    .unwrap()])
+                .replacements(
+                    replacements
+                        .iter()
+                        .map(|replacement| {
+                            sarif::ReplacementBuilder::default()
+                                .deleted_region(
+                                    sarif::RegionBuilder::default()
+                                        .start_line(replacement.deleted_region.start.line as i64)
+                                        .start_column(
+                                            replacement.deleted_region.start.character as i64 + 1,
+                                        )
+                                        .end_line(replacement.deleted_region.end.line as i64)
+                                        .end_column(
+                                            replacement.deleted_region.end.character as i64 + 1,
+                                        )
+                                        .build()
+                                        .unwrap(),
+                                )
+                                .inserted_content(
+                                    sarif::ArtifactContentBuilder::default()
+                                        .text(replacement.inserted_content.clone())
+                                        .build()
+                                        .unwrap(),
+                                )
+                                .build()
+                                .unwrap()
+                        })
+                        .collect::<Vec<_>>(),
+                )
                 .build()
                 .unwrap()])
             .build()

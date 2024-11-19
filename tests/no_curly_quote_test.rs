@@ -2,14 +2,54 @@ use spectral::prelude::*;
 
 mod integration_testing;
 use integration_testing::TestRepo;
-use std::path::PathBuf;
+
+#[test]
+fn honor_disabled_in_config() -> anyhow::Result<()> {
+    let has_curly_quotes = r#"
+        //
+        Line 2 - bad double quotes “here”
+        Line 3 - bad single quotes ‘here’
+        //
+    "#;
+
+    let test_repo: TestRepo = TestRepo::make().unwrap();
+
+    test_repo.write("src/curly.txt", "empty_file".as_bytes());
+    test_repo.git_add_all()?;
+    test_repo.git_commit_all("create curly quote file");
+    test_repo.write("src/curly.txt", has_curly_quotes.as_bytes());
+
+    let toml_on = r#"
+    [nocurlyquotes]
+    enabled = true
+"#;
+
+    // disable nocurlyquotes
+    let toml_off = r#"
+    [nocurlyquotes]
+    enabled = false
+"#;
+
+    test_repo.set_toolbox_toml(toml_on);
+    let mut horton = test_repo.run_horton()?;
+    assert_that(&horton.has_result("no-curly-quotes", "", Some("src/curly.txt"))).is_true();
+
+    test_repo.set_toolbox_toml(toml_off);
+    horton = test_repo.run_horton()?;
+
+    assert_that(&horton.exit_code).contains_value(0);
+    assert_that(&horton.has_result("no-curly-quotes", "", Some("src/curly.txt"))).is_false();
+    assert_that(&horton.has_result("toolbox-perf", "1 files processed", None)).is_true();
+
+    Ok(())
+}
 
 #[test]
 fn assert_find_curly_quotes() {
-    let single_issue = r#"
-        //
-        What do we see “here”
-        //
+    let has_curly_quotes = r#"     1
+        2 - bad double quotes “here”
+        3 - bad single quotes ‘here’
+        4 nothing bad here
     "#;
 
     let test_repo = TestRepo::make().unwrap();
@@ -17,7 +57,7 @@ fn assert_find_curly_quotes() {
     test_repo.git_commit_all("create revision.foo");
 
     {
-        test_repo.write("revision.foo", single_issue.as_bytes());
+        test_repo.write("revision.foo", has_curly_quotes.as_bytes());
         let horton = test_repo.run_horton().unwrap();
         assert_that(&horton.exit_code).contains_value(0);
         assert_that(&horton.has_result(
@@ -26,143 +66,11 @@ fn assert_find_curly_quotes() {
             Some("revision.foo"),
         ))
         .is_true();
+        assert_that(&horton.has_result(
+            "no-curly-quotes",
+            "Found curly quote on line 3",
+            Some("revision.foo"),
+        ))
+        .is_true();
     }
-
-    // {
-    //     test_repo.write("revision.foo", multi_tag.as_bytes());
-    //     let horton = test_repo.run_horton().unwrap();
-    //     assert_that(&horton.exit_code).contains_value(0);
-    //     assert_that(&horton.has_result(
-    //         "if-change-mismatched",
-    //         "Expected matching ThenChange tag",
-    //         None,
-    //     ))
-    //     .is_true();
-    // }
 }
-
-// #[test]
-// fn assert_missing_ifchange() {
-//     let single_tag = r#"
-//         aaaa
-//         bbb
-//         cc
-//         // ThenChange
-//         d
-//     "#;
-
-//     let multi_tag = r#"
-//         aaaa
-//         bbb
-//         cc
-//         // IfChange
-//         c
-//         // ThenChange constants.foo
-//         d
-//         // ThenChange constants.foo
-//     "#;
-
-//     let test_repo = TestRepo::make().unwrap();
-
-//     test_repo.write("constant.foo", "foo-bar".as_bytes());
-//     test_repo.write("revision.foo", "".as_bytes());
-//     test_repo.git_commit_all("create constant.foo and revision.foo");
-
-//     {
-//         test_repo.write("revision.foo", single_tag.as_bytes());
-//         let horton = test_repo.run_horton().unwrap();
-//         assert_that(&horton.exit_code).contains_value(0);
-//         assert_that(&horton.has_result(
-//             "if-change-mismatched",
-//             "Expected preceding IfChange tag",
-//             None,
-//         ))
-//         .is_true();
-//         assert_that(&horton.stdout).contains("");
-//     }
-
-//     {
-//         test_repo.write("revision.foo", multi_tag.as_bytes());
-//         let horton = test_repo.run_horton().unwrap();
-//         assert_that(&horton.exit_code).contains_value(0);
-//         assert_that(&horton.has_result(
-//             "if-change-mismatched",
-//             "Expected preceding IfChange tag",
-//             None,
-//         ))
-//         .is_true();
-//     }
-// }
-
-// #[test]
-// fn assert_localfile_notfound() {
-//     let missing_file = r#"
-//         aaaa
-//         bbb
-//         // IfChange
-//         cc
-//         // ThenChange zee.foo
-//         d
-//     "#;
-
-//     let test_repo = TestRepo::make().unwrap();
-
-//     test_repo.write("revision.foo", "".as_bytes());
-//     test_repo.git_commit_all("create constant.foo and revision.foo");
-
-//     {
-//         test_repo.write("revision.foo", missing_file.as_bytes());
-//         let horton = test_repo.run_horton().unwrap();
-//         assert_that(&horton.exit_code).contains_value(0);
-//         assert_that(&horton.has_result(
-//             "if-change-file-does-not-exist",
-//             "ThenChange zee.foo does not exist",
-//             None,
-//         ))
-//         .is_true();
-//     }
-// }
-
-// #[test]
-// fn verify_find_ictc_blocks() {
-//     let result = find_ictc_blocks(&PathBuf::from(
-//         "tests/if_change_then_change/basic_ictc.file",
-//     ));
-//     assert!(result.is_ok());
-//     assert!(result.unwrap().len() == 1, "should find 1 ictc block");
-
-//     let result = find_ictc_blocks(&PathBuf::from("tests/if_change_then_change/no_ictc.file"));
-//     assert!(result.is_ok());
-//     assert!(result.unwrap().len() == 0, "should find no ictc block");
-
-//     let result = find_ictc_blocks(&PathBuf::from(
-//         "tests/if_change_then_change/multiple_ictc.file",
-//     ));
-//     assert!(result.is_ok());
-//     let list = result.unwrap();
-//     assert!(list.len() == 2, "should find two ictc block");
-//     // assert!(list[0].begin == 1, "first block should point to 2");
-//     let first = &list[0];
-//     assert_eq!(first.begin, Some(6));
-//     assert_eq!(first.end, Some(10));
-//     match &first.thenchange {
-//         Some(ThenChange::RepoFile(path)) => {
-//             assert_eq!(*path, PathBuf::from("foo.bar"));
-//         }
-//         _ => {
-//             panic!("wrong thenchange type");
-//         }
-//     };
-
-//     let second = &list[1];
-//     assert_eq!(second.begin, Some(16));
-//     assert_eq!(second.end, Some(18));
-//     match &second.thenchange {
-//         Some(ThenChange::RepoFile(path)) => {
-//             assert_eq!(*path, PathBuf::from("path/to/file/something.else"));
-//         }
-//         _ => {
-//             panic!("wrong thenchange type");
-//         }
-//     };
-// }

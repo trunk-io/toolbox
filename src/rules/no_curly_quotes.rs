@@ -20,14 +20,14 @@ pub fn no_curly_quotes(run: &Run, _upstream: &str) -> anyhow::Result<Vec<Diagnos
         return Ok(vec![]);
     }
 
+    if run.is_upstream() {
+        return Ok(vec![]);
+    }
+
     debug!("scanning {} files for curly quotes", run.paths.len());
 
     // Scan files in parallel
-    let results: Result<Vec<_>, _> = run
-        .paths
-        .par_iter()
-        .map(|path| no_curly_quotes_impl(path))
-        .collect();
+    let results: Result<Vec<_>, _> = run.paths.par_iter().map(no_curly_quotes_impl).collect();
 
     match results {
         Ok(v) => Ok(v.into_iter().flatten().collect()),
@@ -35,12 +35,12 @@ pub fn no_curly_quotes(run: &Run, _upstream: &str) -> anyhow::Result<Vec<Diagnos
     }
 }
 
+const DOUBLE_CURLY_QUOTES: [char; 4] = ['\u{201C}', '\u{201D}', '\u{201E}', '\u{201F}'];
+const SINGLE_CURLY_QUOTES: [char; 2] = ['\u{2018}', '\u{2019}'];
+
 fn no_curly_quotes_impl(path: &PathBuf) -> anyhow::Result<Vec<Diagnostic>> {
     let in_file = File::open(path).with_context(|| format!("failed to open: {:#?}", path))?;
-    let mut in_buf = BufReader::new(in_file);
-
-    let mut first_line = vec![];
-    in_buf.read_until(b'\n', &mut first_line)?;
+    let in_buf = BufReader::new(in_file);
 
     trace!("scanning contents of {}", path.display());
 
@@ -51,35 +51,39 @@ fn no_curly_quotes_impl(path: &PathBuf) -> anyhow::Result<Vec<Diagnostic>> {
 
     let mut ret = Vec::new();
 
-    for (i, line) in lines_view.iter().chain(lines_view.iter()).enumerate() {
-        let mut pos = 0;
-        let mut char_positions = Vec::new();
-        // Iterate through the line and find positions of “ or ”
-        while let Some(start) = line[pos..].find(|c| c == '“' || c == '”') {
-            let char_pos = (pos + start) as u64;
-            char_positions.push(char_pos);
-            pos = pos + start + 1;
+    for (i, line) in lines_view.iter().enumerate() {
+        let mut char_issues = Vec::new();
+
+        for (pos, c) in line.char_indices() {
+            if SINGLE_CURLY_QUOTES.contains(&c) {
+                let char_pos = line[..pos].chars().count() as u64;
+                char_issues.push((char_pos, "'"));
+            }
+            if DOUBLE_CURLY_QUOTES.contains(&c) {
+                let char_pos = line[..pos].chars().count() as u64;
+                char_issues.push((char_pos, "\""));
+            }
         }
 
-        if char_positions.is_empty() {
+        if char_issues.is_empty() {
             continue;
         }
 
         // Build an array of replacements for each character in char_positions
-        let replacements: Vec<Replacement> = char_positions
+        let replacements: Vec<Replacement> = char_issues
             .iter()
-            .map(|&char_pos| Replacement {
+            .map(|&(char_pos, rchar)| Replacement {
                 deleted_region: Range {
                     start: Position {
-                        line: i as u64,
+                        line: i as u64 + 1,
                         character: char_pos,
                     },
                     end: Position {
-                        line: i as u64,
-                        character: char_pos,
+                        line: i as u64 + 1,
+                        character: char_pos + 1,
                     },
                 },
-                inserted_content: "\"".to_string(),
+                inserted_content: rchar.to_string(),
             })
             .collect();
 
@@ -88,16 +92,16 @@ fn no_curly_quotes_impl(path: &PathBuf) -> anyhow::Result<Vec<Diagnostic>> {
             range: Some(Range {
                 start: Position {
                     line: i as u64,
-                    character: *char_positions.first().unwrap(),
+                    character: char_issues.first().unwrap().0,
                 },
                 end: Position {
                     line: i as u64,
-                    character: *char_positions.last().unwrap(),
+                    character: char_issues.last().unwrap().0 + 1,
                 },
             }),
             severity: Severity::Error,
             code: "no-curly-quotes".to_string(),
-            message: format!("Found curly quote on line {}", i),
+            message: format!("Found curly quote on line {}", i + 1),
             replacements: Some(replacements),
         });
     }
