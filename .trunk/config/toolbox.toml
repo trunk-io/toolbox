@@ -14,4 +14,4 @@ enabled = false
 paths = []
 
 [nocurlyquotes]
-enabled = true
+enabled = false
