@@ -20,10 +20,6 @@ pub fn no_curly_quotes(run: &Run, _upstream: &str) -> anyhow::Result<Vec<Diagnos
         return Ok(vec![]);
     }
 
-    if run.is_upstream() {
-        return Ok(vec![]);
-    }
-
     debug!("scanning {} files for curly quotes", run.paths.len());
 
     // Scan files in parallel
@@ -75,11 +71,11 @@ fn no_curly_quotes_impl(path: &PathBuf) -> anyhow::Result<Vec<Diagnostic>> {
             .map(|&(char_pos, rchar)| Replacement {
                 deleted_region: Range {
                     start: Position {
-                        line: i as u64 + 1,
+                        line: i as u64,
                         character: char_pos,
                     },
                     end: Position {
-                        line: i as u64 + 1,
+                        line: i as u64,
                         character: char_pos + 1,
                     },
                 },

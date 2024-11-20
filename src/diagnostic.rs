@@ -122,11 +122,13 @@ impl Diagnostic {
                             sarif::ReplacementBuilder::default()
                                 .deleted_region(
                                     sarif::RegionBuilder::default()
-                                        .start_line(replacement.deleted_region.start.line as i64)
+                                        .start_line(
+                                            replacement.deleted_region.start.line as i64 + 1,
+                                        )
                                         .start_column(
                                             replacement.deleted_region.start.character as i64 + 1,
                                         )
-                                        .end_line(replacement.deleted_region.end.line as i64)
+                                        .end_line(replacement.deleted_region.end.line as i64 + 1)
                                         .end_column(
                                             replacement.deleted_region.end.character as i64 + 1,
                                         )
