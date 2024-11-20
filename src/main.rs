@@ -4,6 +4,7 @@ use horton::config::Conf;
 use horton::diagnostic;
 use horton::rules::if_change_then_change::ictc;
 use horton::rules::never_edit::never_edit;
+use horton::rules::no_curly_quotes::no_curly_quotes;
 use horton::rules::pls_no_land::pls_no_land;
 use horton::run::{Cli, OutputFormat, Run, Subcommands};
 
@@ -160,6 +161,12 @@ fn run() -> anyhow::Result<()> {
     //beyond two things
     let ne_result = never_edit(&run, &cli.upstream);
     match ne_result {
+        Ok(result) => ret.diagnostics.extend(result),
+        Err(e) => return Err(e),
+    }
+
+    let ncq_result = no_curly_quotes(&run, &cli.upstream);
+    match ncq_result {
         Ok(result) => ret.diagnostics.extend(result),
         Err(e) => return Err(e),
     }
