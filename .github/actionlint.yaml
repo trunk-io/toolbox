@@ -1,13 +1,3 @@
 self-hosted-runner:
   labels:
-    - mint
-    - small
-    - 2xlarge
-    - prod
-    - playwright
-    - monorepo-amd64-large
-    - monorepo-amd64-xlarge
-    - monorepo-amd64-2xlarge
-    - monorepo-arm64-2xlarge
-    - public-amd64-2xlarge
-    - ubuntu-x64
+    - ubuntu-latest

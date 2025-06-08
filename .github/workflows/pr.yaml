@@ -7,7 +7,7 @@ concurrency:
 jobs:
   build_and_test:
     name: Cargo Test [linux]
-    runs-on: [self-hosted, ubuntu-x64]
+    runs-on: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
 
   trunk_check_runner:
     name: Trunk Check runner [linux]
-    runs-on: [self-hosted, ubuntu-x64]
+    runs-on: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
