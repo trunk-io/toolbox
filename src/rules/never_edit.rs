@@ -118,10 +118,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         if let Some(status) = modified.paths.get(protected_file) {
             match status {
                 FileStatus::Modified => {
-                    let replacements = build_restore_replacement(
-                        upstream,
-                        protected_file,
-                    );
+                    let replacements = build_restore_replacement(upstream, protected_file);
                     diagnostics.push(diagnostic::Diagnostic {
                         path: protected_file.clone(),
                         range: None,
@@ -132,10 +129,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                     });
                 }
                 FileStatus::Deleted => {
-                    let replacements = build_restore_replacement(
-                        upstream,
-                        protected_file,
-                    );
+                    let replacements = build_restore_replacement(upstream, protected_file);
                     diagnostics.push(diagnostic::Diagnostic {
                         path: protected_file.clone(),
                         range: None,
