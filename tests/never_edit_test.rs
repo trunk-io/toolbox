@@ -34,6 +34,8 @@ fn assert_modified_locked_file() -> anyhow::Result<()> {
         Some("src/write_once.txt"),
     ))
     .is_true();
+    // Verify the fix proposes restoring the upstream content
+    assert_that(&horton.has_fix_with_content("never-edit-modified", "immutable text")).is_true();
     assert_that(&horton.has_result("never-edit-modified", "", Some("src/write_many.txt")))
         .is_false();
 
@@ -66,6 +68,8 @@ fn assert_deleted_locked_file() -> anyhow::Result<()> {
     assert_that(&horton.exit_code).contains_value(0);
     assert_that(&horton.has_result("never-edit-deleted", "", Some("src/locked/file.txt")))
         .is_true();
+    // Verify the fix proposes restoring the upstream content
+    assert_that(&horton.has_fix_with_content("never-edit-deleted", "immutable text")).is_true();
 
     Ok(())
 }
