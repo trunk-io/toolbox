@@ -28,3 +28,15 @@ jobs:
           org-slug: trunk
           token: ${{ secrets.TRUNK_PROD_ORG_API_TOKEN }}
         continue-on-error: true
+
+  trunk_check_runner:
+    name: Trunk Check runner [linux]
+    runs-on: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trunk Check
+        uses: trunk-io/trunk-action@v1
+        with:
+          cache: false
