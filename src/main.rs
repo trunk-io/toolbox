@@ -144,31 +144,27 @@ fn run() -> anyhow::Result<()> {
         cache_dir: cli.cache_dir.clone(),
     };
 
-    let (pls_no_land_result, ictc_result): (Result<_, _>, Result<_, _>) =
-        rayon::join(|| pls_no_land(&run), || ictc(&run, &cli.upstream));
+    // Run all rules in parallel. Each rule writes its result into its own slot; after the
+    // scope ends we collect results and propagate the first error, if any.
+    let mut pls_no_land_result: anyhow::Result<Vec<diagnostic::Diagnostic>> = Ok(vec![]);
+    let mut ictc_result: anyhow::Result<Vec<diagnostic::Diagnostic>> = Ok(vec![]);
+    let mut never_edit_result: anyhow::Result<Vec<diagnostic::Diagnostic>> = Ok(vec![]);
+    let mut no_curly_quotes_result: anyhow::Result<Vec<diagnostic::Diagnostic>> = Ok(vec![]);
 
-    match pls_no_land_result {
-        Ok(result) => ret.diagnostics.extend(result),
-        Err(e) => return Err(e),
-    }
+    rayon::scope(|s| {
+        s.spawn(|_| pls_no_land_result = pls_no_land(&run));
+        s.spawn(|_| ictc_result = ictc(&run, &cli.upstream));
+        s.spawn(|_| never_edit_result = never_edit(&run, &cli.upstream));
+        s.spawn(|_| no_curly_quotes_result = no_curly_quotes(&run, &cli.upstream));
+    });
 
-    match ictc_result {
-        Ok(result) => ret.diagnostics.extend(result),
-        Err(e) => return Err(e),
-    }
-
-    //TODO: refactor this to use a threadpool for all the rules. using rayon::join() won't scale
-    //beyond two things
-    let ne_result = never_edit(&run, &cli.upstream);
-    match ne_result {
-        Ok(result) => ret.diagnostics.extend(result),
-        Err(e) => return Err(e),
-    }
-
-    let ncq_result = no_curly_quotes(&run, &cli.upstream);
-    match ncq_result {
-        Ok(result) => ret.diagnostics.extend(result),
-        Err(e) => return Err(e),
+    for rule_result in [
+        pls_no_land_result,
+        ictc_result,
+        never_edit_result,
+        no_curly_quotes_result,
+    ] {
+        ret.diagnostics.extend(rule_result?);
     }
 
     let mut output_string = generate_line_string(&ret);
