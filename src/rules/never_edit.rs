@@ -8,6 +8,8 @@ use log::debug;
 use log::trace;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
+use std::path::Path;
+
 use crate::diagnostic;
 use crate::git;
 
@@ -115,7 +117,7 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
     let modified = git::modified_since(upstream, None)?;
 
     for protected_file in &protected_files {
-        if let Some(status) = modified.paths.get(protected_file) {
+        if let Some(status) = modified.paths.get(Path::new(protected_file)) {
             match status {
                 FileStatus::Modified => {
                     let replacements = build_restore_replacement(upstream, protected_file);

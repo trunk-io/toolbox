@@ -1197,7 +1197,6 @@ dependencies = [
  "git2",
  "glob",
  "glob-match",
- "lazy_static",
  "log",
  "log4rs",
  "rayon",

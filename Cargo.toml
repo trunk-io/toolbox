@@ -17,7 +17,6 @@ path = "src/lib.rs"
 anyhow = "1.0.64"
 clap = { version = "4.0.8", features = ["derive"] }
 git2 = { version = "0.19", default-features = false }
-lazy_static = "1.4.0"
 log = "0.4.22"
 regex = "1.10.6"
 serde = { version = "1.0.209", features = ["derive"] }
