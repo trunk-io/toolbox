@@ -2,12 +2,10 @@ use clap::Parser;
 use confique::Config;
 use horton::config::Conf;
 use horton::diagnostic;
-use horton::rules::if_change_then_change::ictc;
-use horton::rules::never_edit::never_edit;
-use horton::rules::no_curly_quotes::no_curly_quotes;
-use horton::rules::pls_no_land::pls_no_land;
+use horton::rules::RULES;
 use horton::run::{Cli, OutputFormat, Run, Subcommands};
 
+use anyhow::Context;
 use log::{debug, warn};
 use serde_sarif::sarif;
 use std::env;
@@ -137,34 +135,33 @@ fn run() -> anyhow::Result<()> {
             std::process::exit(1);
         });
 
+    let upstream_mode = cli.upstream_mode || cli.cache_dir.ends_with("-upstream");
+
     let run = Run {
         paths: cli.files.into_iter().map(PathBuf::from).collect(),
         config,
         config_path: toolbox_toml,
         cache_dir: cli.cache_dir.clone(),
+        upstream_mode,
     };
 
-    // Run all rules in parallel. Each rule writes its result into its own slot; after the
-    // scope ends we collect results and propagate the first error, if any.
-    let mut pls_no_land_result: anyhow::Result<Vec<diagnostic::Diagnostic>> = Ok(vec![]);
-    let mut ictc_result: anyhow::Result<Vec<diagnostic::Diagnostic>> = Ok(vec![]);
-    let mut never_edit_result: anyhow::Result<Vec<diagnostic::Diagnostic>> = Ok(vec![]);
-    let mut no_curly_quotes_result: anyhow::Result<Vec<diagnostic::Diagnostic>> = Ok(vec![]);
+    let mut results: Vec<anyhow::Result<Vec<diagnostic::Diagnostic>>> =
+        RULES.iter().map(|_| Ok(vec![])).collect();
 
     rayon::scope(|s| {
-        s.spawn(|_| pls_no_land_result = pls_no_land(&run));
-        s.spawn(|_| ictc_result = ictc(&run, &cli.upstream));
-        s.spawn(|_| never_edit_result = never_edit(&run, &cli.upstream));
-        s.spawn(|_| no_curly_quotes_result = no_curly_quotes(&run, &cli.upstream));
+        for (result, (_, rule_fn)) in results.iter_mut().zip(RULES.iter()) {
+            let run = &run;
+            let upstream = cli.upstream.as_str();
+            s.spawn(move |_| {
+                *result = rule_fn(run, upstream);
+            });
+        }
     });
 
-    for rule_result in [
-        pls_no_land_result,
-        ictc_result,
-        never_edit_result,
-        no_curly_quotes_result,
-    ] {
-        ret.diagnostics.extend(rule_result?);
+    for (i, result) in results.into_iter().enumerate() {
+        let rule_name = RULES[i].0;
+        ret.diagnostics
+            .extend(result.with_context(|| format!("rule '{}' failed", rule_name))?);
     }
 
     let mut output_string = generate_line_string(&ret);
