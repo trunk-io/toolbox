@@ -16,6 +16,9 @@ slow-timeout = { period = "60s" }
 
 [profile.ci]
 fail-fast = false
+# Retry failed tests; if a test fails once and then passes, nextest marks it
+# "flaky" rather than "failed". This is what powers Trunk Flaky Tests detection.
+retries = 2
 
 [profile.ci.junit]
 path = "junit.xml"
