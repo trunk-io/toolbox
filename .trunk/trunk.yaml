@@ -63,11 +63,11 @@ lint:
     - git-diff-check
     - taplo@0.9.3
     - actionlint@1.7.6
-    - clippy@1.76.0
+    - clippy@1.85.0
     - gitleaks@8.22.1
     - markdownlint@0.43.0
     - prettier@3.4.2
-    - rustfmt@1.76.0
+    - rustfmt@1.85.0
 actions:
   enabled:
     - trunk-upgrade-available
