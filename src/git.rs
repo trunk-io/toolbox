@@ -1,8 +1,7 @@
 use git2::{AttrCheckFlags, AttrValue, Delta, DiffOptions, Repository};
-use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::RwLock;
+use std::sync::{LazyLock, RwLock};
 #[derive(Debug, Clone)]
 pub struct Hunk {
     pub path: PathBuf,
@@ -27,15 +26,11 @@ pub struct FileChanges {
     pub hunks: Vec<Hunk>,
 
     /// Map of changed files and FileStatus
-    pub paths: HashMap<String, FileStatus>,
+    pub paths: HashMap<PathBuf, FileStatus>,
 }
 
-lazy_static! {
-    // RwLock lets concurrent cache hits (the common case, once a path has been seen) proceed
-    // without serializing. A Mutex would force every lookup to serialize against every other
-    // lookup, even though lookups don't mutate the map.
-    static ref LFS_CACHE: RwLock<HashMap<String, bool>> = RwLock::new(HashMap::new());
-}
+static LFS_CACHE: LazyLock<RwLock<HashMap<String, bool>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 fn is_lfs(repo: &Repository, path: &Path) -> bool {
     let path_str = path.to_string_lossy().to_string();
@@ -107,16 +102,13 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
                 if !is_lfs(&repo, path) {
                     match delta.status() {
                         Delta::Added => {
-                            ret.paths
-                                .insert(path.to_string_lossy().to_string(), FileStatus::Added);
+                            ret.paths.insert(path.to_path_buf(), FileStatus::Added);
                         }
                         Delta::Modified => {
-                            ret.paths
-                                .insert(path.to_string_lossy().to_string(), FileStatus::Modified);
+                            ret.paths.insert(path.to_path_buf(), FileStatus::Modified);
                         }
                         Delta::Deleted => {
-                            ret.paths
-                                .insert(path.to_string_lossy().to_string(), FileStatus::Deleted);
+                            ret.paths.insert(path.to_path_buf(), FileStatus::Deleted);
                         }
                         _ => {}
                     }

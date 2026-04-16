@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 
 use crate::diagnostic;
 use crate::git;
@@ -43,10 +44,10 @@ impl IctcBlock {
     }
 }
 
-lazy_static::lazy_static! {
-    static ref RE_BEGIN: Regex = Regex::new(r"(?i)^\s*(//|#)\s*ifchange(.*)$").unwrap();
-    static ref RE_END: Regex = Regex::new(r"(?i)^\s*(//|#)\s*thenchange(.*)$").unwrap();
-}
+static RE_BEGIN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^\s*(//|#)\s*ifchange(.*)$").unwrap());
+static RE_END: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^\s*(//|#)\s*thenchange(.*)$").unwrap());
 
 pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
     let mut blocks: Vec<IctcBlock> = Vec::new();

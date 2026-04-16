@@ -246,7 +246,10 @@ impl TestRepo {
 
         let modified_paths =
             horton::git::modified_since(upstream_ref, Some(self.dir.path()))?.paths;
-        let files: Vec<String> = modified_paths.keys().map(|key| key.to_string()).collect();
+        let files: Vec<String> = modified_paths
+            .keys()
+            .map(|key| key.to_string_lossy().to_string())
+            .collect();
 
         cmd.arg("--upstream")
             .arg(upstream_ref)

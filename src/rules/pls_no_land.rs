@@ -1,6 +1,4 @@
 // trunk-ignore-all(trunk-toolbox/do-not-land,trunk-toolbox/todo)
-extern crate regex;
-
 use crate::diagnostic;
 use crate::run::Run;
 use anyhow::Context;
@@ -11,11 +9,12 @@ use std::fs::File;
 use std::io::Read;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 
-lazy_static::lazy_static! {
-    static ref DNL_RE: Regex = Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap();
-    static ref TODO_RE: Regex = Regex::new(r"(?i)(TODO|FIXME)(\W+.*)?$").unwrap();
-}
+static DNL_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)(DO[\s_-]*NOT[\s_-]*LAND)").unwrap());
+static TODO_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)(TODO|FIXME)(\W+.*)?$").unwrap());
 
 pub fn is_binary_file(path: &PathBuf) -> std::io::Result<bool> {
     let mut file = File::open(path)?;
