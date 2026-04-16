@@ -199,6 +199,25 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     Ok(ret)
 }
 
+pub fn get_upstream_content(
+    upstream: &str,
+    file_path: &str,
+    repo_path: Option<&Path>,
+) -> anyhow::Result<String> {
+    let path = repo_path.unwrap_or(Path::new("."));
+    let repo = Repository::open(path)?;
+
+    let upstream_tree = match repo.find_reference(upstream) {
+        Ok(reference) => reference.peel_to_tree()?,
+        _ => repo.revparse_single(upstream)?.peel_to_tree()?,
+    };
+
+    let entry = upstream_tree.get_path(Path::new(file_path))?;
+    let blob = repo.find_blob(entry.id())?;
+    let content = std::str::from_utf8(blob.content())?;
+    Ok(content.to_string())
+}
+
 pub fn clone(repo_url: &str, destination: &Path) -> Output {
     let output = Command::new("git")
         .args([

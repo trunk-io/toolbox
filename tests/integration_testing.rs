@@ -66,6 +66,34 @@ impl HortonOutput {
     }
 
     #[allow(dead_code)]
+    pub fn has_fix_with_content(&self, rule_id: &str, expected_content: &str) -> bool {
+        for run in self.runs() {
+            if let Some(results) = run.results {
+                for result in results {
+                    if result.rule_id.as_deref() == Some(rule_id) {
+                        if let Some(fixes) = &result.fixes {
+                            for fix in fixes {
+                                for change in &fix.artifact_changes {
+                                    for replacement in &change.replacements {
+                                        if let Some(content) = &replacement.inserted_content {
+                                            if let Some(text) = &content.text {
+                                                if text.contains(expected_content) {
+                                                    return true;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    #[allow(dead_code)]
     pub fn has_result_with_rule_id(&self, rule_id: &str) -> bool {
         // Iterate over the runs and results to find the matching code and message
         for run in self.runs() {
