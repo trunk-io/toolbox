@@ -1,5 +1,3 @@
-use spectral::prelude::*;
-
 mod integration_testing;
 use integration_testing::TestRepo;
 
@@ -35,14 +33,14 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
 
     test_repo.set_toolbox_toml(TOML_ON);
     let mut horton = test_repo.run_horton()?;
-    assert_that(&horton.has_result("no-curly-quotes", "", Some("src/curly.txt"))).is_true();
+    assert!(horton.has_result("no-curly-quotes", "", Some("src/curly.txt")));
 
     test_repo.set_toolbox_toml(toml_off);
     horton = test_repo.run_horton()?;
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.has_result("no-curly-quotes", "", Some("src/curly.txt"))).is_false();
-    assert_that(&horton.has_result("toolbox-perf", "1 files processed", None)).is_true();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(!horton.has_result("no-curly-quotes", "", Some("src/curly.txt")));
+    assert!(horton.has_result("toolbox-perf", "1 files processed", None));
 
     Ok(())
 }
@@ -57,30 +55,26 @@ fn assert_find_curly_quotes() {
     {
         test_repo.write("revision.foo", CURLY_QUOTES.as_bytes());
         let horton = test_repo.run_horton().unwrap();
-        assert_that(&horton.exit_code).contains_value(0);
-        assert_that(&horton.has_result(
+        assert_eq!(horton.exit_code, Some(0));
+        assert!(horton.has_result(
             "no-curly-quotes",
             "Found curly quote on line 2",
             Some("revision.foo"),
-        ))
-        .is_true();
-        assert_that(&horton.has_result(
+        ));
+        assert!(horton.has_result(
             "no-curly-quotes",
             "Found curly quote on line 3",
             Some("revision.foo"),
-        ))
-        .is_true();
-        assert_that(&horton.has_result(
+        ));
+        assert!(horton.has_result(
             "no-curly-quotes",
             "Found curly quote on line 4",
             Some("revision.foo"),
-        ))
-        .is_true();
-        assert_that(&horton.has_result(
+        ));
+        assert!(horton.has_result(
             "no-curly-quotes",
             "Found curly quote on line 5",
             Some("revision.foo"),
-        ))
-        .is_true();
+        ));
     }
 }

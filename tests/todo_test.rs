@@ -1,6 +1,4 @@
 // trunk-ignore-all(trunk-toolbox/todo)
-use spectral::prelude::*;
-
 mod integration_testing;
 use integration_testing::TestRepo;
 
@@ -28,8 +26,8 @@ fn basic_todo() -> anyhow::Result<()> {
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.has_result_with_rule_id("todo")).is_true();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(horton.has_result_with_rule_id("todo"));
 
     Ok(())
 }
@@ -46,8 +44,8 @@ fn basic_fixme() -> anyhow::Result<()> {
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.has_result("todo", "Found 'FIXME'", Some("alpha.foo"))).is_true();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(horton.has_result("todo", "Found 'FIXME'", Some("alpha.foo")));
 
     Ok(())
 }
@@ -64,8 +62,8 @@ fn basic_mastodon() -> anyhow::Result<()> {
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout.contains("Found 'todo'")).is_false();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(!horton.stdout.contains("Found 'todo'"));
 
     Ok(())
 }
@@ -78,7 +76,7 @@ fn default_disabled_in_config() -> anyhow::Result<()> {
 
     {
         let horton = test_repo.run_horton()?;
-        assert_that(&horton.stdout.contains("Found 'todo'")).is_false();
+        assert!(!horton.stdout.contains("Found 'todo'"));
     }
 
     Ok(())

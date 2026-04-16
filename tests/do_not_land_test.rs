@@ -1,6 +1,4 @@
 // trunk-ignore-all(trunk-toolbox/do-not-land)
-use spectral::prelude::*;
-
 mod integration_testing;
 use integration_testing::TestRepo;
 
@@ -15,9 +13,8 @@ fn basic() -> anyhow::Result<()> {
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.has_result("do-not-land", "Found 'do-NOT-lAnD'", Some("alpha.foo")))
-        .is_true();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(horton.has_result("do-not-land", "Found 'do-NOT-lAnD'", Some("alpha.foo")));
 
     Ok(())
 }
@@ -30,8 +27,8 @@ fn binary_files_ignored() -> anyhow::Result<()> {
     test_repo.git_add_all()?;
     let horton = test_repo.run_horton()?;
 
-    assert_that(&horton.runs()).has_length(1);
-    assert_that(&horton.has_result_with_rule_id("do-not-land")).is_false();
+    assert_eq!(horton.runs().len(), 1);
+    assert!(!horton.has_result_with_rule_id("do-not-land"));
 
     Ok(())
 }
@@ -44,7 +41,7 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
 
     {
         let horton = test_repo.run_horton()?;
-        assert_that(&horton.has_result_with_rule_id("do-not-land")).is_true();
+        assert!(horton.has_result_with_rule_id("do-not-land"));
     }
 
     let config = r#"
@@ -56,7 +53,7 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
     test_repo.write("toolbox.toml", config.as_bytes());
     {
         let horton = test_repo.run_horton().unwrap();
-        assert_that(&horton.has_result_with_rule_id("do-not-land")).is_false();
+        assert!(!horton.has_result_with_rule_id("do-not-land"));
     }
 
     Ok(())

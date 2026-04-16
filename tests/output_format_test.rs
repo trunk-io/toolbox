@@ -3,7 +3,6 @@ extern crate regex;
 
 use serde_json::Error;
 use serde_sarif::sarif::Sarif;
-use spectral::prelude::*;
 
 mod integration_testing;
 use integration_testing::TestRepo;
@@ -20,8 +19,8 @@ fn default_sarif() -> anyhow::Result<()> {
     let horton = test_repo.run_horton_with("HEAD", "sarif", false)?;
 
     let sarif: Result<Sarif, Error> = serde_json::from_str(&horton.stdout);
-    assert_that(&sarif.is_ok()).is_true();
-    assert_that(&sarif.unwrap().runs).has_length(1);
+    assert!(sarif.is_ok());
+    assert_eq!(sarif.unwrap().runs.len(), 1);
 
     Ok(())
 }
@@ -40,8 +39,8 @@ fn default_print() -> anyhow::Result<()> {
         "alpha.foo:1:0: Found 'do-NOT-lAnD' (error)\nalpha.foo:2:0: Found 'DONOTLAND' (error)\n",
     );
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout).is_equal_to(&expected_text);
+    assert_eq!(horton.exit_code, Some(0));
+    assert_eq!(horton.stdout, expected_text);
 
     Ok(())
 }
