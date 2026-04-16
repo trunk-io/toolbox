@@ -2,7 +2,7 @@ use git2::{AttrCheckFlags, AttrValue, Delta, DiffOptions, Repository};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::RwLock;
 #[derive(Debug, Clone)]
 pub struct Hunk {
     pub path: PathBuf,
@@ -31,14 +31,16 @@ pub struct FileChanges {
 }
 
 lazy_static! {
-    static ref LFS_CACHE: Mutex<HashMap<String, bool>> = Mutex::new(HashMap::new());
+    // RwLock lets concurrent cache hits (the common case, once a path has been seen) proceed
+    // without serializing. A Mutex would force every lookup to serialize against every other
+    // lookup, even though lookups don't mutate the map.
+    static ref LFS_CACHE: RwLock<HashMap<String, bool>> = RwLock::new(HashMap::new());
 }
 
 fn is_lfs(repo: &Repository, path: &Path) -> bool {
     let path_str = path.to_string_lossy().to_string();
 
-    // Check the cache first
-    if let Some(&cached_result) = LFS_CACHE.lock().unwrap().get(&path_str) {
+    if let Some(&cached_result) = LFS_CACHE.read().unwrap().get(&path_str) {
         return cached_result;
     }
 
@@ -54,8 +56,7 @@ fn is_lfs(repo: &Repository, path: &Path) -> bool {
         false
     };
 
-    // Store the result in the cache
-    LFS_CACHE.lock().unwrap().insert(path_str, result);
+    LFS_CACHE.write().unwrap().insert(path_str, result);
 
     result
 }
