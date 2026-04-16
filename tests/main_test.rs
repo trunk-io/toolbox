@@ -1,5 +1,3 @@
-use spectral::prelude::*;
-
 mod integration_testing;
 use integration_testing::TestRepo;
 
@@ -11,8 +9,8 @@ fn binary_file_untracked() -> anyhow::Result<()> {
 
     let horton = test_repo.run_horton()?;
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout.contains("Expected change")).is_false();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(!horton.stdout.contains("Expected change"));
     Ok(())
 }
 
@@ -27,8 +25,8 @@ fn binary_file_committed() -> anyhow::Result<()> {
 
     print!("{}", horton.stdout);
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout.contains("Expected change")).is_false();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(!horton.stdout.contains("Expected change"));
 
     Ok(())
 }
@@ -47,8 +45,8 @@ fn lfs_file_untracked() -> anyhow::Result<()> {
 
     let horton = test_repo.run_horton()?;
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout.contains("Expected change")).is_false();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(!horton.stdout.contains("Expected change"));
 
     Ok(())
 }
@@ -67,8 +65,8 @@ fn lfs_file_committed() -> anyhow::Result<()> {
 
     let horton = test_repo.run_horton_with("HEAD^", "sarif", false)?;
 
-    assert_that(&horton.exit_code).contains_value(0);
-    assert_that(&horton.stdout.contains("Expected change")).is_false();
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(!horton.stdout.contains("Expected change"));
 
     Ok(())
 }
