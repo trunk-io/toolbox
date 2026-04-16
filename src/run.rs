@@ -46,6 +46,10 @@ pub struct Cli {
     #[clap(long)]
     /// optional path to write results to
     pub results: Option<String>,
+
+    #[clap(long)]
+    /// signal that this run is analyzing the upstream baseline
+    pub upstream_mode: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -60,10 +64,11 @@ pub struct Run {
     pub config: Conf,
     pub config_path: String,
     pub cache_dir: String,
+    pub upstream_mode: bool,
 }
 
 impl Run {
     pub fn is_upstream(&self) -> bool {
-        self.cache_dir.ends_with("-upstream")
+        self.upstream_mode
     }
 }

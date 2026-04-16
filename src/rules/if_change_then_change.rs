@@ -199,8 +199,18 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
     for block in &blocks {
         if let Some(change) = &block.thenchange {
             match change {
-                ThenChange::RemoteFile(_remote_file) => {
-                    todo!("build support for remote file")
+                ThenChange::RemoteFile(remote_file) => {
+                    diagnostics.push(diagnostic::Diagnostic {
+                        path: block.path.to_str().unwrap().to_string(),
+                        range: Some(block.get_range()),
+                        severity: diagnostic::Severity::Warning,
+                        code: "if-change-remote-not-supported".to_string(),
+                        message: format!(
+                            "ThenChange references remote file {} which is not yet supported",
+                            remote_file,
+                        ),
+                        replacements: None,
+                    });
                 }
                 ThenChange::RepoFile(local_file) => {
                     // Check if the repo file exists - if it was deleted this is a warning

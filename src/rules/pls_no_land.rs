@@ -32,7 +32,7 @@ pub fn is_ignored_file(path: &Path) -> bool {
 // Checks for $re and other forms thereof in source code
 //
 // Note that this is named "pls_no_land" to avoid causing DNL matches everywhere in trunk-toolbox.
-pub fn pls_no_land(run: &Run) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
+pub fn pls_no_land(run: &Run, _upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnostic>> {
     let dnl_config = &run.config.donotland;
     let todo_config = &run.config.todo;
 
