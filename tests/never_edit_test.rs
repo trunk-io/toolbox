@@ -111,19 +111,25 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
 fn recursive_glob_matches_nested_file() -> anyhow::Result<()> {
     let test_repo: TestRepo = TestRepo::make().unwrap();
 
-    test_repo.write("ts/apps/sst-env.d.ts", "generated types".as_bytes());
+    test_repo.write(
+        "packages/widget/generated-handoff.ts",
+        "generated types".as_bytes(),
+    );
     test_repo.git_add_all()?;
     test_repo.git_commit_all("create nested file");
 
     let toml = r#"
     [neveredit]
     enabled = true
-    paths = ["**/sst-env.d.ts"]
+    paths = ["**/generated-handoff.ts"]
 "#;
     test_repo.set_toolbox_toml(toml);
 
     // Modify the protected file so is_never_edit is exercised end-to-end.
-    test_repo.write("ts/apps/sst-env.d.ts", "edited types".as_bytes());
+    test_repo.write(
+        "packages/widget/generated-handoff.ts",
+        "edited types".as_bytes(),
+    );
 
     let horton = test_repo.run_horton()?;
 
@@ -134,7 +140,7 @@ fn recursive_glob_matches_nested_file() -> anyhow::Result<()> {
     assert!(horton.has_result(
         "never-edit-modified",
         "file is protected and should not be modified",
-        Some("ts/apps/sst-env.d.ts"),
+        Some("packages/widget/generated-handoff.ts"),
     ));
 
     Ok(())
