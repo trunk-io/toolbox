@@ -18,7 +18,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Install nextest
-        run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+        run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C "${CARGO_HOME:-$HOME/.cargo}/bin"
 
       - name: Run tests
         run: cargo nextest run --profile=ci
@@ -36,13 +36,10 @@ jobs:
   trunk_check_runner:
     name: Trunk Check runner [linux]
     runs-on: [ubuntu-latest]
-<<<<<<< HEAD
-=======
     permissions:
       checks: write
       contents: read
       pull-requests: read
->>>>>>> main
 
     steps:
       - uses: actions/checkout@v4
