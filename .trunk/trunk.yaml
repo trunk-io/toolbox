@@ -13,7 +13,7 @@ runtimes:
     - python@3.10.8
     - go@1.21.0
     - node@22.16.0
-    - rust@1.85.0
+    - rust@1.95.0
 tools:
   enabled:
     - gh@2.65.0
@@ -63,11 +63,11 @@ lint:
     - git-diff-check
     - taplo@0.10.0
     - actionlint@1.7.8
-    - clippy@1.85.0
+    - clippy@1.95.0
     - gitleaks@8.29.0
     - markdownlint@0.48.0
     - prettier@3.8.3
-    - rustfmt@1.85.0
+    - rustfmt@1.95.0
 actions:
   enabled:
     - trunk-upgrade-available
