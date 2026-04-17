@@ -108,6 +108,39 @@ fn honor_disabled_in_config() -> anyhow::Result<()> {
 }
 
 #[test]
+fn recursive_glob_matches_nested_file() -> anyhow::Result<()> {
+    let test_repo: TestRepo = TestRepo::make().unwrap();
+
+    test_repo.write("ts/apps/sst-env.d.ts", "generated types".as_bytes());
+    test_repo.git_add_all()?;
+    test_repo.git_commit_all("create nested file");
+
+    let toml = r#"
+    [neveredit]
+    enabled = true
+    paths = ["**/sst-env.d.ts"]
+"#;
+    test_repo.set_toolbox_toml(toml);
+
+    // Modify the protected file so is_never_edit is exercised end-to-end.
+    test_repo.write("ts/apps/sst-env.d.ts", "edited types".as_bytes());
+
+    let horton = test_repo.run_horton()?;
+
+    assert_eq!(horton.exit_code, Some(0));
+    // The recursive glob is valid and protects a real file, so no config warning.
+    assert!(!horton.has_result_with_rule_id("never-edit-bad-config"));
+    // The modification is detected via glob_match on the workspace-relative path.
+    assert!(horton.has_result(
+        "never-edit-modified",
+        "file is protected and should not be modified",
+        Some("ts/apps/sst-env.d.ts"),
+    ));
+
+    Ok(())
+}
+
+#[test]
 fn warn_for_config_not_protecting_anything() -> anyhow::Result<()> {
     let test_repo: TestRepo = TestRepo::make().unwrap();
 

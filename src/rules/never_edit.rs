@@ -1,7 +1,6 @@
 use crate::config::NeverEditConf;
 use crate::git::FileStatus;
 use crate::run::Run;
-use glob::glob;
 use glob_match::glob_match;
 
 use log::debug;
@@ -48,43 +47,26 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         return Ok(diagnostics);
     }
 
-    // We only report diagnostic issues for config when not running as upstream
+    // We only report diagnostic issues for config when not running as upstream.
+    //
+    // Validate patterns against the list of git-tracked files anchored at the
+    // workspace root rather than walking the filesystem from the process cwd.
+    // This keeps validation in lockstep with `is_never_edit`, which matches
+    // workspace-relative paths with `glob_match`.
     if !run.is_upstream() {
         debug!("verifying protected paths are valid and exist");
+        let tracked = git::tracked_files(None).unwrap_or_default();
         for glob_path in &config.paths {
-            let mut matches_something = false;
-            match glob(glob_path) {
-                Ok(paths) => {
-                    for entry in paths {
-                        match entry {
-                            Ok(_path) => {
-                                matches_something = true;
-                                break;
-                            }
-                            Err(e) => println!("Error reading path: {:?}", e),
-                        }
-                    }
-                    if !matches_something {
-                        diagnostics.push(diagnostic::Diagnostic {
-                            path: run.config_path.clone(),
-                            range: None,
-                            severity: diagnostic::Severity::Warning,
-                            code: "never-edit-bad-config".to_string(),
-                            message: format!("{:?} does not protect any existing files", glob_path),
-                            replacements: None,
-                        });
-                    }
-                }
-                Err(_e) => {
-                    diagnostics.push(diagnostic::Diagnostic {
-                        path: run.config_path.clone(),
-                        range: None,
-                        severity: diagnostic::Severity::Warning,
-                        code: "never-edit-bad-config".to_string(),
-                        message: format!("{:?} is not a valid glob pattern", glob_path),
-                        replacements: None,
-                    });
-                }
+            let matches_something = tracked.iter().any(|file| glob_match(glob_path, file));
+            if !matches_something {
+                diagnostics.push(diagnostic::Diagnostic {
+                    path: run.config_path.clone(),
+                    range: None,
+                    severity: diagnostic::Severity::Warning,
+                    code: "never-edit-bad-config".to_string(),
+                    message: format!("{:?} does not protect any existing files", glob_path),
+                    replacements: None,
+                });
             }
         }
     }

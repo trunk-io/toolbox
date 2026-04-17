@@ -169,6 +169,24 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
     Ok(ret)
 }
 
+/// Lists all files tracked by the git repository that contains `repo_path`
+/// (or the current directory when `repo_path` is None). Paths are returned
+/// relative to the workdir root, so they align with the paths horton receives
+/// on the command line and can be matched against never-edit globs with the
+/// same matcher used at runtime.
+pub fn tracked_files(repo_path: Option<&Path>) -> anyhow::Result<Vec<String>> {
+    let path = repo_path.unwrap_or(Path::new("."));
+    let repo = Repository::discover(path)?;
+    let index = repo.index()?;
+    let mut files = Vec::with_capacity(index.len());
+    for entry in index.iter() {
+        if let Ok(s) = std::str::from_utf8(&entry.path) {
+            files.push(s.to_string());
+        }
+    }
+    Ok(files)
+}
+
 pub fn get_upstream_content(
     upstream: &str,
     file_path: &str,
