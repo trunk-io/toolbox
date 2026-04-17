@@ -1,11 +1,8 @@
 name: Main
 
-<<<<<<< HEAD
-=======
 permissions:
   contents: read
 
->>>>>>> main
 on:
   push:
     branches: [main]
@@ -13,14 +10,9 @@ on:
     # Run daily at 07:00 UTC to surface flaky tests that don't always fail on
     # push. Keeping the same job so uploads go through the same code path as
     # the post-merge runs.
-<<<<<<< HEAD
-    - cron: "0 7 * * *"
-  workflow_dispatch:
-=======
     - cron: 0 7 * * *
   workflow_dispatch: {}
 
->>>>>>> main
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
