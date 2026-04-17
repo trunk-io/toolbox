@@ -141,6 +141,35 @@ fn recursive_glob_matches_nested_file() -> anyhow::Result<()> {
 }
 
 #[test]
+fn never_edit_globs_strip_dot_slash_prefix() -> anyhow::Result<()> {
+    let test_repo: TestRepo = TestRepo::make().unwrap();
+
+    test_repo.write("src/write_once.txt", "immutable text".as_bytes());
+    test_repo.write("src/write_many.txt", "mutable text".as_bytes());
+    test_repo.git_add_all()?;
+    test_repo.git_commit_all("create files");
+
+    let toml = r#"
+    [neveredit]
+    enabled = true
+    paths = ["./**/write_once*"]
+"#;
+    test_repo.set_toolbox_toml(toml);
+    test_repo.write("src/write_once.txt", "edited".as_bytes());
+
+    let horton = test_repo.run_horton()?;
+    assert_eq!(horton.exit_code, Some(0));
+    assert!(horton.has_result(
+        "never-edit-modified",
+        "file is protected and should not be modified",
+        Some("src/write_once.txt"),
+    ));
+    assert!(!horton.has_result_with_rule_id("never-edit-bad-config"));
+
+    Ok(())
+}
+
+#[test]
 fn warn_for_config_not_protecting_anything() -> anyhow::Result<()> {
     let test_repo: TestRepo = TestRepo::make().unwrap();
 

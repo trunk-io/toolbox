@@ -172,8 +172,18 @@ pub fn modified_since(upstream: &str, repo_path: Option<&Path>) -> anyhow::Resul
 /// Lists all files tracked by the git repository that contains `repo_path`
 /// (or the current directory when `repo_path` is None). Paths are returned
 /// relative to the workdir root, so they align with the paths horton receives
-/// on the command line and can be matched against never-edit globs with the
-/// same matcher used at runtime.
+/// on the command line after never-edit normalizes them to workspace-relative
+/// form for glob matching.
+/// Root of the working tree for the repository containing `repo_path` (or
+/// the current directory when `repo_path` is `None`).
+pub fn repo_workdir(repo_path: Option<&Path>) -> anyhow::Result<PathBuf> {
+    let path = repo_path.unwrap_or(Path::new("."));
+    let repo = Repository::discover(path)?;
+    repo.workdir()
+        .map(|p| p.to_path_buf())
+        .ok_or_else(|| anyhow::anyhow!("repository has no working tree"))
+}
+
 pub fn tracked_files(repo_path: Option<&Path>) -> anyhow::Result<Vec<String>> {
     let path = repo_path.unwrap_or(Path::new("."));
     let repo = Repository::discover(path)?;
