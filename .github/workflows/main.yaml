@@ -1,12 +1,21 @@
-name: Pull Request
+name: Main
 
 permissions:
   contents: read
 
-on: [pull_request]
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Run daily at 07:00 UTC to surface flaky tests that don't always fail on
+    # push. Keeping the same job so uploads go through the same code path as
+    # the post-merge runs.
+    - cron: 0 7 * * *
+  workflow_dispatch: {}
+
 concurrency:
-  group: ${{ github.head_ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build_and_test:
@@ -24,7 +33,8 @@ jobs:
         run: cargo nextest run --profile=ci
 
       - name: Upload test results
-        # Run this step even if the test step ahead fails
+        # Establish the main-branch baseline that Trunk Flaky Tests compares
+        # PR runs against. Runs even if tests fail so flakes/failures are visible.
         if: "!cancelled()"
         uses: trunk-io/analytics-uploader@main
         with:
@@ -32,19 +42,3 @@ jobs:
           org-slug: trunk
           token: ${{ secrets.TRUNK_PROD_ORG_API_TOKEN }}
         continue-on-error: true
-
-  trunk_check_runner:
-    name: Trunk Check runner [linux]
-    runs-on: [ubuntu-latest]
-    permissions:
-      checks: write
-      contents: read
-      pull-requests: read
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Trunk Check
-        uses: trunk-io/trunk-action@v1
-        with:
-          cache: false
