@@ -1,5 +1,10 @@
 name: Release Toolbox
+
+permissions:
+  contents: read
+
 on:
+  # checkov:skip=CKV_GHA_7: Manual releases require a tag; it is only used for artifact names and gh release metadata, not to alter the build entrypoint.
   workflow_dispatch:
     inputs:
       release_tag:
@@ -9,6 +14,9 @@ concurrency: ${{ github.workflow }}
 
 jobs:
   build:
+    permissions:
+      actions: write
+      contents: read
     name: Build ${{ matrix.target }}
     strategy:
       matrix:
@@ -47,6 +55,9 @@ jobs:
           path: target/${{ matrix.target }}/release/trunk-toolbox
 
   tag_and_release:
+    permissions:
+      actions: read
+      contents: write
     name: Tag and Release [ ${{ github.event.inputs.release_tag }} ]
     runs-on: [self-hosted, Linux]
     needs: [build]

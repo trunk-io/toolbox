@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 
 use crate::diagnostic;
 use crate::git;
@@ -43,10 +44,10 @@ impl IctcBlock {
     }
 }
 
-lazy_static::lazy_static! {
-    static ref RE_BEGIN: Regex = Regex::new(r"(?i)^\s*(//|#)\s*ifchange(.*)$").unwrap();
-    static ref RE_END: Regex = Regex::new(r"(?i)^\s*(//|#)\s*thenchange(.*)$").unwrap();
-}
+static RE_BEGIN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^\s*(//|#)\s*ifchange(.*)$").unwrap());
+static RE_END: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^\s*(//|#)\s*thenchange(.*)$").unwrap());
 
 pub fn find_ictc_blocks(path: &PathBuf) -> anyhow::Result<Vec<IctcBlock>> {
     let mut blocks: Vec<IctcBlock> = Vec::new();
@@ -199,8 +200,18 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
     for block in &blocks {
         if let Some(change) = &block.thenchange {
             match change {
-                ThenChange::RemoteFile(_remote_file) => {
-                    todo!("build support for remote file")
+                ThenChange::RemoteFile(remote_file) => {
+                    diagnostics.push(diagnostic::Diagnostic {
+                        path: block.path.to_str().unwrap().to_string(),
+                        range: Some(block.get_range()),
+                        severity: diagnostic::Severity::Warning,
+                        code: "if-change-remote-not-supported".to_string(),
+                        message: format!(
+                            "ThenChange references remote file {} which is not yet supported",
+                            remote_file,
+                        ),
+                        replacements: None,
+                    });
                 }
                 ThenChange::RepoFile(local_file) => {
                     // Check if the repo file exists - if it was deleted this is a warning

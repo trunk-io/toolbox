@@ -1,4 +1,8 @@
 name: Pull Request
+
+permissions:
+  contents: read
+
 on: [pull_request]
 concurrency:
   group: ${{ github.head_ref }}
@@ -32,6 +36,13 @@ jobs:
   trunk_check_runner:
     name: Trunk Check runner [linux]
     runs-on: [ubuntu-latest]
+<<<<<<< HEAD
+=======
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: read
+>>>>>>> main
 
     steps:
       - uses: actions/checkout@v4
