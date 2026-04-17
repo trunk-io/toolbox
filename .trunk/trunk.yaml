@@ -1,18 +1,18 @@
 version: 0.1
 cli:
-  version: 1.22.8
+  version: 1.25.0
 api:
-  address: api.trunk-staging.io:8443
+  address: api.trunk.io:443
 plugins:
   sources:
     - id: trunk
-      ref: v1.6.6
+      ref: v1.7.6
       uri: https://github.com/trunk-io/plugins
 runtimes:
   enabled:
     - python@3.10.8
     - go@1.21.0
-    - node@18.20.5
+    - node@22.16.0
     - rust@1.85.0
 tools:
   enabled:
@@ -52,21 +52,21 @@ lint:
         - tests/**
 
   enabled:
-    - osv-scanner@1.9.2
-    - shellcheck@0.10.0
+    - osv-scanner@2.2.4
+    - shellcheck@0.11.0
     - shfmt@3.6.0
     - trunk-toolbox@0.5.4
-    - checkov@3.2.347
-    - trufflehog@3.88.1
-    - oxipng@9.1.3
-    - yamllint@1.35.1
+    - checkov@3.2.521
+    - trufflehog@3.90.13
+    - oxipng@9.1.5
+    - yamllint@1.38.0
     - git-diff-check
-    - taplo@0.9.3
-    - actionlint@1.7.6
+    - taplo@0.10.0
+    - actionlint@1.7.8
     - clippy@1.85.0
-    - gitleaks@8.22.1
-    - markdownlint@0.43.0
-    - prettier@3.4.2
+    - gitleaks@8.29.0
+    - markdownlint@0.48.0
+    - prettier@3.8.3
     - rustfmt@1.85.0
 actions:
   enabled:
