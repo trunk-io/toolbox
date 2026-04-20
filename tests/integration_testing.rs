@@ -251,21 +251,27 @@ impl TestRepo {
         format: &str,
         write_results_to_file: bool,
     ) -> anyhow::Result<HortonOutput> {
-        self.run_horton_inner(upstream_ref, format, ResultsMode::from_flag(write_results_to_file))
-    }
-
-    #[allow(dead_code)]
-    pub fn run_horton_with_results_path(
-        &self,
-        upstream_ref: &str,
-        format: &str,
-        results_path: &std::path::Path,
-    ) -> anyhow::Result<HortonOutput> {
         self.run_horton_inner(
             upstream_ref,
             format,
-            ResultsMode::Explicit(results_path.to_path_buf()),
+            ResultsMode::from_flag(write_results_to_file),
+            None,
         )
+    }
+
+    #[allow(dead_code)]
+    pub fn run_horton_customized(
+        &self,
+        upstream_ref: &str,
+        format: &str,
+        results_path: Option<&std::path::Path>,
+        cache_dir: Option<&str>,
+    ) -> anyhow::Result<HortonOutput> {
+        let results_mode = match results_path {
+            Some(p) => ResultsMode::Explicit(p.to_path_buf()),
+            None => ResultsMode::None,
+        };
+        self.run_horton_inner(upstream_ref, format, results_mode, cache_dir)
     }
 
     fn run_horton_inner(
@@ -273,6 +279,7 @@ impl TestRepo {
         upstream_ref: &str,
         format: &str,
         results_mode: ResultsMode,
+        cache_dir: Option<&str>,
     ) -> anyhow::Result<HortonOutput> {
         let mut cmd = Command::cargo_bin("trunk-toolbox")?;
 
@@ -287,6 +294,9 @@ impl TestRepo {
             .arg(upstream_ref)
             .current_dir(self.dir.path());
         cmd.arg("--output-format").arg(format);
+        if let Some(dir) = cache_dir {
+            cmd.arg("--cache-dir").arg(dir);
+        }
         for path in files {
             cmd.arg(path);
         }
