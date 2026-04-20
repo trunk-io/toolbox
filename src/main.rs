@@ -170,11 +170,29 @@ fn run() -> anyhow::Result<()> {
     }
 
     if let Some(outfile) = &cli.results {
-        std::fs::write(outfile, output_string)?;
+        write_results_file(outfile, &output_string)
+            .with_context(|| format!("failed to write results to {:?}", outfile))?;
     } else {
         println!("{}", output_string);
     }
 
+    Ok(())
+}
+
+/// Write `contents` to `outfile`, creating parent directories if they don't
+/// yet exist. Callers (like trunk-check) sometimes pass a results path inside
+/// a freshly-minted temp subdir that hasn't been created, so treating a
+/// missing parent as a hard error makes the tool fragile for no good reason.
+fn write_results_file(outfile: &str, contents: &str) -> anyhow::Result<()> {
+    let path = Path::new(outfile);
+    if let Some(parent) = path.parent() {
+        if !parent.as_os_str().is_empty() && !parent.exists() {
+            std::fs::create_dir_all(parent).with_context(|| {
+                format!("failed to create parent directory {:?}", parent)
+            })?;
+        }
+    }
+    std::fs::write(path, contents)?;
     Ok(())
 }
 
