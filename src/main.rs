@@ -131,13 +131,6 @@ fn run() -> anyhow::Result<()> {
     let outfile = cli.results.clone();
     let output_format = cli.output_format;
 
-    // The `--results=${tmpfile}` contract (see plugin.yaml, read_output_from:
-    // tmp_file) requires that toolbox always create the output file the
-    // caller pointed us at - downstream readers like trunk-check unconditionally
-    // read it, and if the file is missing they report the linter as failed.
-    // Split the real work into `build_output` so we can synthesize a valid
-    // SARIF fallback on catastrophic failure (config load, SARIF builder)
-    // and still write it out before surfacing the error.
     let (output_string, exit_err) = match build_output(cli, &start) {
         Ok((output, err)) => (output, err),
         Err(err) => (fallback_output_string(output_format, &err), Some(err)),
