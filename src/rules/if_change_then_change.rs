@@ -152,7 +152,7 @@ pub fn ictc(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::Diagnos
         return Ok(vec![]);
     }
 
-    let modified = git::modified_since(upstream, None)?;
+    let modified = git::modified_since(upstream, run.workspace())?;
     let hunks = &modified.hunks;
 
     log::trace!("modified stats, per libgit2:\n{:#?}", modified);

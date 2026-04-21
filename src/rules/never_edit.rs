@@ -148,13 +148,13 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         return Ok(diagnostics);
     }
 
-    let workdir = git::repo_workdir(None)?;
+    let workdir = git::repo_workdir(run.workspace())?;
 
     // Validate patterns against the list of git-tracked files anchored at the
     // workspace root rather than walking the filesystem from the process cwd.
     // This keeps validation in lockstep with matching, which uses workspace-relative paths.
     debug!("verifying protected paths are valid and exist");
-    let tracked = git::tracked_files(None).unwrap_or_default();
+    let tracked = git::tracked_files(run.workspace()).unwrap_or_default();
     for glob_path in &config.paths {
         let pat = normalize_never_edit_glob_pattern(glob_path, &workdir);
         let matches_something = tracked.iter().any(|file| {
@@ -199,13 +199,14 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
         protected_files.len()
     );
 
-    let modified = git::modified_since(upstream, None)?;
+    let modified = git::modified_since(upstream, run.workspace())?;
 
     for protected_file in &protected_files {
         if let Some(status) = modified.paths.get(Path::new(protected_file)) {
             match status {
                 FileStatus::Modified => {
-                    let replacements = build_restore_replacement(upstream, protected_file);
+                    let replacements =
+                        build_restore_replacement(upstream, protected_file, run.workspace());
                     diagnostics.push(diagnostic::Diagnostic {
                         path: protected_file.clone(),
                         range: None,
@@ -216,7 +217,8 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
                     });
                 }
                 FileStatus::Deleted => {
-                    let replacements = build_restore_replacement(upstream, protected_file);
+                    let replacements =
+                        build_restore_replacement(upstream, protected_file, run.workspace());
                     diagnostics.push(diagnostic::Diagnostic {
                         path: protected_file.clone(),
                         range: None,
@@ -249,8 +251,9 @@ pub fn never_edit(run: &Run, upstream: &str) -> anyhow::Result<Vec<diagnostic::D
 fn build_restore_replacement(
     upstream: &str,
     file_path: &str,
+    workspace: Option<&Path>,
 ) -> Option<Vec<diagnostic::Replacement>> {
-    let upstream_text = match git::get_upstream_content(upstream, file_path, None) {
+    let upstream_text = match git::get_upstream_content(upstream, file_path, workspace) {
         Ok(content) => content,
         Err(e) => {
             debug!("failed to get upstream content for {}: {}", file_path, e);
