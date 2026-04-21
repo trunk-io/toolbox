@@ -1,6 +1,6 @@
 use crate::config::Conf;
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::builder::PossibleValue;
 use clap::{Parser, Subcommand, ValueEnum};
@@ -50,6 +50,10 @@ pub struct Cli {
     #[clap(long)]
     /// signal that this run is analyzing the upstream baseline
     pub upstream_mode: bool,
+
+    #[clap(long)]
+    /// path to the git workspace to operate on; defaults to the current working directory
+    pub workspace: Option<PathBuf>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -65,10 +69,15 @@ pub struct Run {
     pub config_path: String,
     pub cache_dir: String,
     pub upstream_mode: bool,
+    pub workspace: Option<PathBuf>,
 }
 
 impl Run {
     pub fn is_upstream(&self) -> bool {
         self.upstream_mode
+    }
+
+    pub fn workspace(&self) -> Option<&Path> {
+        self.workspace.as_deref()
     }
 }

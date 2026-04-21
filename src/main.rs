@@ -192,6 +192,7 @@ fn build_output(cli: Cli, start: &Instant) -> anyhow::Result<(String, Option<any
         config_path: toolbox_toml,
         cache_dir: cli.cache_dir.clone(),
         upstream_mode,
+        workspace: cli.workspace,
     };
 
     let mut results: Vec<anyhow::Result<Vec<diagnostic::Diagnostic>>> =
