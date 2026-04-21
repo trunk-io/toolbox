@@ -2,12 +2,14 @@ mod integration_testing;
 
 use integration_testing::TestRepo;
 
-/// Regression: trunk-check invokes toolbox with `--results` pointing at a
-/// path whose parent directory does not yet exist. Toolbox must fail fast
-/// with an actionable error rather than a raw `No such file or directory
-/// (os error 2)` emitted from the final write after all the rules have run.
+/// trunk-check invokes toolbox with `--results` pointing at a tmpfile whose
+/// parent directory may not have been pre-created. Matching the behavior of
+/// every other `read_output_from: tmp_file` linter (eslint, semgrep,
+/// gitleaks, ...), toolbox creates any missing ancestor directories and
+/// writes the results file rather than bailing - otherwise the linter looks
+/// "failed" to the caller before it ever gets a chance to run.
 #[test]
-fn results_path_with_missing_parent_dir_bails_with_clear_error() -> anyhow::Result<()> {
+fn results_path_with_missing_parent_dir_is_created() -> anyhow::Result<()> {
     let test_repo = TestRepo::make()?;
     test_repo.write("src/file.txt", "hello".as_bytes());
     test_repo.git_add_all()?;
@@ -22,25 +24,45 @@ fn results_path_with_missing_parent_dir_bails_with_clear_error() -> anyhow::Resu
 
     assert_eq!(
         horton.exit_code,
-        Some(1),
-        "toolbox should fail when --results parent dir is missing; stderr:\n{}",
+        Some(0),
+        "toolbox should create missing parent dirs and write results; stderr:\n{}",
         horton.stderr
     );
-    // The error message should name the offending flag and path so the caller
-    // (trunk-check, a human, etc.) can actually diagnose the problem.
+    assert!(
+        missing_parent.exists(),
+        "results file should have been created alongside the new parent dir"
+    );
+
+    Ok(())
+}
+
+/// Pointing `--results` at an existing directory remains a genuine usage
+/// bug - there's no sane recovery - so the pre-flight check still catches
+/// it with a clear error.
+#[test]
+fn results_path_pointing_at_directory_bails_with_clear_error() -> anyhow::Result<()> {
+    let test_repo = TestRepo::make()?;
+    test_repo.write("src/file.txt", "hello".as_bytes());
+    test_repo.git_add_all()?;
+    test_repo.git_commit_all("initial");
+    test_repo.write("src/file.txt", "goodbye".as_bytes());
+
+    let tmp = tempfile::tempdir()?;
+    let dir_as_results = tmp.path().to_path_buf();
+    assert!(dir_as_results.is_dir());
+
+    let horton = test_repo.run_horton_customized("HEAD", "sarif", Some(&dir_as_results), None)?;
+
+    assert_eq!(
+        horton.exit_code,
+        Some(1),
+        "toolbox should fail when --results points at a directory; stderr:\n{}",
+        horton.stderr
+    );
     assert!(
         horton.stderr.contains("--results"),
         "stderr should mention --results; got:\n{}",
         horton.stderr
-    );
-    assert!(
-        horton.stderr.contains("results.json"),
-        "stderr should mention the offending path; got:\n{}",
-        horton.stderr
-    );
-    assert!(
-        !missing_parent.exists(),
-        "no results file should be written when validation fails"
     );
 
     Ok(())

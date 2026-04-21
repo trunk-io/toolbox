@@ -18,18 +18,30 @@ fn results_file_is_created_on_clean_run() -> anyhow::Result<()> {
 
     let tmp = tempfile::tempdir()?;
     let results_path = tmp.path().join("out.sarif");
-    assert!(!results_path.exists(), "precondition: tmpfile must not pre-exist");
+    assert!(
+        !results_path.exists(),
+        "precondition: tmpfile must not pre-exist"
+    );
 
     let horton = test_repo.run_horton_customized("HEAD", "sarif", Some(&results_path), None)?;
 
-    assert_eq!(horton.exit_code, Some(0), "clean run should exit 0; stderr:\n{}", horton.stderr);
+    assert_eq!(
+        horton.exit_code,
+        Some(0),
+        "clean run should exit 0; stderr:\n{}",
+        horton.stderr
+    );
     assert!(
         results_path.exists(),
         "toolbox must create the --results tmpfile on a clean run; stderr:\n{}",
         horton.stderr
     );
-    let _: Sarif = serde_json::from_str(&horton.results)
-        .unwrap_or_else(|e| panic!("results file is not valid SARIF: {}\nbody:\n{}", e, horton.results));
+    let _: Sarif = serde_json::from_str(&horton.results).unwrap_or_else(|e| {
+        panic!(
+            "results file is not valid SARIF: {}\nbody:\n{}",
+            e, horton.results
+        )
+    });
 
     Ok(())
 }
@@ -112,7 +124,12 @@ fn text_format_results_file_is_created() -> anyhow::Result<()> {
 
     let horton = test_repo.run_horton_customized("HEAD", "text", Some(&results_path), None)?;
 
-    assert_eq!(horton.exit_code, Some(0), "clean run should exit 0; stderr:\n{}", horton.stderr);
+    assert_eq!(
+        horton.exit_code,
+        Some(0),
+        "clean run should exit 0; stderr:\n{}",
+        horton.stderr
+    );
     assert!(
         results_path.exists(),
         "toolbox must create the --results file in text mode too; stderr:\n{}",

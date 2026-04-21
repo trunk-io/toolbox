@@ -12,17 +12,17 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-/// Hand-built minimum SARIF document used when the normal output pipeline
-/// can't produce one. Kept as a constant so the fallback doesn't have to
-/// re-enter serde_json just to say "nothing ran".
-const EMPTY_SARIF: &str = "{\"version\":\"2.1.0\",\"runs\":[]}";
-
 use log::LevelFilter;
 use log4rs::{
     append::console::ConsoleAppender,
     config::{Appender, Root},
     encode::pattern::PatternEncoder,
 };
+
+/// Hand-built minimum SARIF document used when the normal output pipeline
+/// can't produce one. Kept as a constant so the fallback doesn't have to
+/// re-enter serde_json just to say "nothing ran".
+const EMPTY_SARIF: &str = "{\"version\":\"2.1.0\",\"runs\":[]}";
 
 fn generate_line_string(original_results: &diagnostic::Diagnostics) -> String {
     return original_results
@@ -144,7 +144,19 @@ fn run() -> anyhow::Result<()> {
     };
 
     if let Some(path) = &outfile {
-        std::fs::write(path, &output_string)
+        // trunk-check hands us a tmpfile path whose parent directory may
+        // not exist yet; matching eslint/semgrep/etc., we quietly create
+        // the ancestor directories so the write succeeds. Bailing out here
+        // would defeat the whole point of the `--results` contract.
+        let target = Path::new(path);
+        if let Some(parent) = target.parent() {
+            if !parent.as_os_str().is_empty() && !parent.exists() {
+                std::fs::create_dir_all(parent).with_context(|| {
+                    format!("failed to create --results parent directory {:?}", parent)
+                })?;
+            }
+        }
+        std::fs::write(target, &output_string)
             .with_context(|| format!("failed to write results to {:?}", path))?;
     } else {
         println!("{}", output_string);
@@ -167,10 +179,7 @@ fn run() -> anyhow::Result<()> {
 /// - `Err(err)` - catastrophic failure before we could produce a useful
 ///   output string (e.g. config file parse error). The caller is responsible
 ///   for synthesizing a fallback document so the output file still exists.
-fn build_output(
-    cli: Cli,
-    start: &Instant,
-) -> anyhow::Result<(String, Option<anyhow::Error>)> {
+fn build_output(cli: Cli, start: &Instant) -> anyhow::Result<(String, Option<anyhow::Error>)> {
     let mut ret = diagnostic::Diagnostics::default();
 
     // If no configuration file is provided the default config will be used;
@@ -275,26 +284,19 @@ fn minimal_error_sarif(err: &anyhow::Error) -> String {
     serde_json::to_string_pretty(&doc).unwrap_or_else(|_| EMPTY_SARIF.to_string())
 }
 
-/// Validate the `--results` path before we do any real work so the caller
-/// gets an actionable error instead of a late, context-free io::Error out of
-/// the final write. A nonexistent parent directory is treated as a usage bug
-/// (toolbox does not silently create scratch directories).
+/// Lightweight pre-flight check on the `--results` path. We intentionally do
+/// not reject missing parent directories here - trunk-check invokes toolbox
+/// with tmpfile paths whose ancestors may not yet exist, and the expectation
+/// (matching eslint, semgrep, and every other `read_output_from: tmp_file`
+/// linter) is that the tool creates the file. Missing parents are created at
+/// write time; the only thing we catch up front is the usage bug of pointing
+/// `--results` at an existing directory, since that's not recoverable.
 fn validate_results_path(results: Option<&str>) -> anyhow::Result<()> {
     let Some(outfile) = results else {
         return Ok(());
     };
 
-    let path = Path::new(outfile);
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() && !parent.exists() {
-            anyhow::bail!(
-                "--results path {:?} is not writable: parent directory {:?} does not exist",
-                outfile,
-                parent
-            );
-        }
-    }
-    if path.is_dir() {
+    if Path::new(outfile).is_dir() {
         anyhow::bail!(
             "--results path {:?} is a directory, expected a file",
             outfile
