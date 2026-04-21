@@ -36,38 +36,6 @@ fn results_path_with_missing_parent_dir_is_created() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Pointing `--results` at an existing directory remains a genuine usage
-/// bug - there's no sane recovery - so the pre-flight check still catches
-/// it with a clear error.
-#[test]
-fn results_path_pointing_at_directory_bails_with_clear_error() -> anyhow::Result<()> {
-    let test_repo = TestRepo::make()?;
-    test_repo.write("src/file.txt", "hello".as_bytes());
-    test_repo.git_add_all()?;
-    test_repo.git_commit_all("initial");
-    test_repo.write("src/file.txt", "goodbye".as_bytes());
-
-    let tmp = tempfile::tempdir()?;
-    let dir_as_results = tmp.path().to_path_buf();
-    assert!(dir_as_results.is_dir());
-
-    let horton = test_repo.run_horton_customized("HEAD", "sarif", Some(&dir_as_results), None)?;
-
-    assert_eq!(
-        horton.exit_code,
-        Some(1),
-        "toolbox should fail when --results points at a directory; stderr:\n{}",
-        horton.stderr
-    );
-    assert!(
-        horton.stderr.contains("--results"),
-        "stderr should mention --results; got:\n{}",
-        horton.stderr
-    );
-
-    Ok(())
-}
-
 /// `--cache-dir` is optional. If the caller passes a directory that doesn't
 /// exist we should not explode - we should warn on stderr and continue
 /// running without a cache.

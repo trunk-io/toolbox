@@ -122,10 +122,6 @@ fn run() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    if let Err(e) = validate_results_path(cli.results.as_deref()) {
-        eprintln!("Toolbox cannot run: {}", e);
-        std::process::exit(1);
-    }
     cli.cache_dir = validate_cache_dir(cli.cache_dir);
 
     let outfile = cli.results.clone();
@@ -275,27 +271,6 @@ fn minimal_error_sarif(err: &anyhow::Error) -> String {
         }],
     });
     serde_json::to_string_pretty(&doc).unwrap_or_else(|_| EMPTY_SARIF.to_string())
-}
-
-/// Lightweight pre-flight check on the `--results` path. We intentionally do
-/// not reject missing parent directories here - trunk-check invokes toolbox
-/// with tmpfile paths whose ancestors may not yet exist, and the expectation
-/// (matching eslint, semgrep, and every other `read_output_from: tmp_file`
-/// linter) is that the tool creates the file. Missing parents are created at
-/// write time; the only thing we catch up front is the usage bug of pointing
-/// `--results` at an existing directory, since that's not recoverable.
-fn validate_results_path(results: Option<&str>) -> anyhow::Result<()> {
-    let Some(outfile) = results else {
-        return Ok(());
-    };
-
-    if Path::new(outfile).is_dir() {
-        anyhow::bail!(
-            "--results path {:?} is a directory, expected a file",
-            outfile
-        );
-    }
-    Ok(())
 }
 
 /// Validate `--cache-dir`. An unusable value is not fatal - toolbox can run
