@@ -205,7 +205,10 @@ fn validate_results_path(results: Option<&str>) -> anyhow::Result<()> {
         }
     }
     if path.is_dir() {
-        anyhow::bail!("--results path {:?} is a directory, expected a file", outfile);
+        anyhow::bail!(
+            "--results path {:?} is a directory, expected a file",
+            outfile
+        );
     }
     Ok(())
 }

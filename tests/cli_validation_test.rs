@@ -18,8 +18,7 @@ fn results_path_with_missing_parent_dir_bails_with_clear_error() -> anyhow::Resu
     let missing_parent = tmp.path().join("does/not/exist/yet/results.json");
     assert!(!missing_parent.parent().unwrap().exists());
 
-    let horton =
-        test_repo.run_horton_customized("HEAD", "sarif", Some(&missing_parent), None)?;
+    let horton = test_repo.run_horton_customized("HEAD", "sarif", Some(&missing_parent), None)?;
 
     assert_eq!(
         horton.exit_code,

@@ -193,4 +193,3 @@ fn warn_for_config_not_protecting_anything() -> anyhow::Result<()> {
     assert!(horton.has_result_with_rule_id("never-edit-bad-config"));
     Ok(())
 }
-
