@@ -164,6 +164,15 @@ impl TestRepo {
             .current_dir(dir.path())
             .output()?;
 
+        // Ambient user config may require commit signing; opt the hermetic
+        // test repo out so tests don't depend on signing infrastructure.
+        Command::new("git")
+            .arg("config")
+            .arg("commit.gpgsign")
+            .arg("false")
+            .current_dir(dir.path())
+            .output()?;
+
         Command::new("git")
             .arg("commit")
             .arg("--message")
@@ -242,6 +251,36 @@ impl TestRepo {
         format: &str,
         write_results_to_file: bool,
     ) -> anyhow::Result<HortonOutput> {
+        self.run_horton_inner(
+            upstream_ref,
+            format,
+            ResultsMode::from_flag(write_results_to_file),
+            None,
+        )
+    }
+
+    #[allow(dead_code)]
+    pub fn run_horton_customized(
+        &self,
+        upstream_ref: &str,
+        format: &str,
+        results_path: Option<&std::path::Path>,
+        cache_dir: Option<&str>,
+    ) -> anyhow::Result<HortonOutput> {
+        let results_mode = match results_path {
+            Some(p) => ResultsMode::Explicit(p.to_path_buf()),
+            None => ResultsMode::None,
+        };
+        self.run_horton_inner(upstream_ref, format, results_mode, cache_dir)
+    }
+
+    fn run_horton_inner(
+        &self,
+        upstream_ref: &str,
+        format: &str,
+        results_mode: ResultsMode,
+        cache_dir: Option<&str>,
+    ) -> anyhow::Result<HortonOutput> {
         let mut cmd = Command::cargo_bin("trunk-toolbox")?;
 
         let modified_paths =
@@ -255,28 +294,38 @@ impl TestRepo {
             .arg(upstream_ref)
             .current_dir(self.dir.path());
         cmd.arg("--output-format").arg(format);
+        if let Some(dir) = cache_dir {
+            cmd.arg("--cache-dir").arg(dir);
+        }
         for path in files {
             cmd.arg(path);
         }
 
-        let tmpfile_path = if write_results_to_file {
-            // create a temporary file
-            let tmpfile = NamedTempFile::new()?;
-            let path = tmpfile.path().to_str().unwrap().to_string();
-            cmd.arg("--results").arg(tmpfile.path().to_str().unwrap());
-            path
-        } else {
-            String::new()
+        // Hold the tempfile alive for the duration of the run when we created one.
+        let mut _tmpfile_guard: Option<NamedTempFile> = None;
+        let results_path: Option<String> = match &results_mode {
+            ResultsMode::None => None,
+            ResultsMode::Auto => {
+                let tmpfile = NamedTempFile::new()?;
+                let path = tmpfile.path().to_str().unwrap().to_string();
+                cmd.arg("--results").arg(&path);
+                _tmpfile_guard = Some(tmpfile);
+                Some(path)
+            }
+            ResultsMode::Explicit(p) => {
+                let path = p.to_str().unwrap().to_string();
+                cmd.arg("--results").arg(&path);
+                Some(path)
+            }
         };
 
         log::debug!("Command: {}", format!("{:?}", cmd));
 
         let output = cmd.output()?;
 
-        let results = if write_results_to_file {
-            fs::read_to_string(tmpfile_path)?
-        } else {
-            String::new()
+        let results = match &results_path {
+            Some(p) => fs::read_to_string(p).unwrap_or_default(),
+            None => String::new(),
         };
 
         return Ok(HortonOutput {
@@ -285,6 +334,22 @@ impl TestRepo {
             results,
             exit_code: output.status.code(),
         });
+    }
+}
+
+enum ResultsMode {
+    None,
+    Auto,
+    Explicit(std::path::PathBuf),
+}
+
+impl ResultsMode {
+    fn from_flag(write_results_to_file: bool) -> Self {
+        if write_results_to_file {
+            ResultsMode::Auto
+        } else {
+            ResultsMode::None
+        }
     }
 }
 
