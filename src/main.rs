@@ -12,6 +12,11 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+/// Hand-built minimum SARIF document used when the normal output pipeline
+/// can't produce one. Kept as a constant so the fallback doesn't have to
+/// re-enter serde_json just to say "nothing ran".
+const EMPTY_SARIF: &str = "{\"version\":\"2.1.0\",\"runs\":[]}";
+
 use log::LevelFilter;
 use log4rs::{
     append::console::ConsoleAppender,
@@ -123,10 +128,53 @@ fn run() -> anyhow::Result<()> {
     }
     cli.cache_dir = validate_cache_dir(cli.cache_dir);
 
+    let outfile = cli.results.clone();
+    let output_format = cli.output_format;
+
+    // The `--results=${tmpfile}` contract (see plugin.yaml, read_output_from:
+    // tmp_file) requires that toolbox always create the output file the
+    // caller pointed us at - downstream readers like trunk-check unconditionally
+    // read it, and if the file is missing they report the linter as failed.
+    // Split the real work into `build_output` so we can synthesize a valid
+    // SARIF fallback on catastrophic failure (config load, SARIF builder)
+    // and still write it out before surfacing the error.
+    let (output_string, exit_err) = match build_output(cli, &start) {
+        Ok((output, err)) => (output, err),
+        Err(err) => (fallback_output_string(output_format, &err), Some(err)),
+    };
+
+    if let Some(path) = &outfile {
+        std::fs::write(path, &output_string)
+            .with_context(|| format!("failed to write results to {:?}", path))?;
+    } else {
+        println!("{}", output_string);
+    }
+
+    match exit_err {
+        Some(err) => Err(err),
+        None => Ok(()),
+    }
+}
+
+/// Run the rule pipeline and produce the output string that should be
+/// written to `--results` (or stdout).
+///
+/// Return shape:
+/// - `Ok((output, None))` - clean run, exit 0.
+/// - `Ok((output, Some(err)))` - at least one rule failed. The failures are
+///   already embedded in `output` as SARIF results with rule id
+///   `toolbox-rule-error`; `err` carries the non-zero-exit signal.
+/// - `Err(err)` - catastrophic failure before we could produce a useful
+///   output string (e.g. config file parse error). The caller is responsible
+///   for synthesizing a fallback document so the output file still exists.
+fn build_output(
+    cli: Cli,
+    start: &Instant,
+) -> anyhow::Result<(String, Option<anyhow::Error>)> {
     let mut ret = diagnostic::Diagnostics::default();
 
-    // If not configuration file is provided the default config will be used
-    // some parts of toolbo can run with the default config
+    // If no configuration file is provided the default config will be used;
+    // some parts of toolbox can run with the default config.
     let toolbox_toml: String = match find_toolbox_toml() {
         Some(file) => file,
         None => "no_config_found.toml".to_string(),
@@ -136,10 +184,7 @@ fn run() -> anyhow::Result<()> {
         .env()
         .file(&toolbox_toml)
         .load()
-        .unwrap_or_else(|err| {
-            eprintln!("Toolbox cannot run: {}", err);
-            std::process::exit(1);
-        });
+        .with_context(|| format!("failed to load toolbox config from {:?}", toolbox_toml))?;
 
     let upstream_mode = cli.upstream_mode || cli.cache_dir.ends_with("-upstream");
 
@@ -164,25 +209,70 @@ fn run() -> anyhow::Result<()> {
         }
     });
 
+    // Individual rule failures must not abort the pipeline: the caller still
+    // needs a valid output file. Convert each failure into an error-level
+    // diagnostic so it rides along in the SARIF/text output, and surface the
+    // accumulated failure list as the non-zero-exit signal at the end.
+    let mut failed_rules: Vec<String> = Vec::new();
     for (i, result) in results.into_iter().enumerate() {
         let rule_name = RULES[i].0;
-        ret.diagnostics
-            .extend(result.with_context(|| format!("rule '{}' failed", rule_name))?);
+        match result {
+            Ok(diagnostics) => ret.diagnostics.extend(diagnostics),
+            Err(err) => {
+                log::error!("rule '{}' failed: {:#}", rule_name, err);
+                failed_rules.push(rule_name.to_string());
+                ret.diagnostics.push(diagnostic::Diagnostic {
+                    path: String::new(),
+                    range: None,
+                    severity: diagnostic::Severity::Error,
+                    code: "toolbox-rule-error".to_string(),
+                    message: format!("rule '{}' failed: {:#}", rule_name, err),
+                    replacements: None,
+                });
+            }
+        }
     }
 
-    let mut output_string = generate_line_string(&ret);
-    if cli.output_format == OutputFormat::Sarif {
-        output_string = generate_sarif_string(&ret, &run, &start)?;
-    }
+    let output_string = match cli.output_format {
+        OutputFormat::Sarif => generate_sarif_string(&ret, &run, start)?,
+        OutputFormat::Text => generate_line_string(&ret),
+    };
 
-    if let Some(outfile) = &cli.results {
-        std::fs::write(outfile, &output_string)
-            .with_context(|| format!("failed to write results to {:?}", outfile))?;
+    let exit_err = if failed_rules.is_empty() {
+        None
     } else {
-        println!("{}", output_string);
-    }
+        Some(anyhow::anyhow!(
+            "rule(s) failed: {}",
+            failed_rules.join(", ")
+        ))
+    };
+    Ok((output_string, exit_err))
+}
 
-    Ok(())
+/// Produce a minimal output document describing `err` so we can still honor
+/// `--results=${tmpfile}` when the normal pipeline couldn't produce anything.
+fn fallback_output_string(format: OutputFormat, err: &anyhow::Error) -> String {
+    match format {
+        OutputFormat::Sarif => minimal_error_sarif(err),
+        OutputFormat::Text => format!("error: {:#}\n", err),
+    }
+}
+
+/// Hand-built SARIF (bypasses the serde_sarif builder on purpose - that
+/// builder may have just been the thing that failed us).
+fn minimal_error_sarif(err: &anyhow::Error) -> String {
+    let doc = serde_json::json!({
+        "version": "2.1.0",
+        "runs": [{
+            "tool": { "driver": { "name": "trunk-toolbox" } },
+            "results": [{
+                "ruleId": "toolbox-error",
+                "level": "error",
+                "message": { "text": format!("{:#}", err) },
+            }],
+        }],
+    });
+    serde_json::to_string_pretty(&doc).unwrap_or_else(|_| EMPTY_SARIF.to_string())
 }
 
 /// Validate the `--results` path before we do any real work so the caller
