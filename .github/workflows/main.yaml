@@ -36,7 +36,7 @@ jobs:
         # Establish the main-branch baseline that Trunk Flaky Tests compares
         # PR runs against. Runs even if tests fail so flakes/failures are visible.
         if: "!cancelled()"
-        uses: trunk-io/analytics-uploader@main
+        uses: trunk-io/analytics-uploader@v2
         with:
           junit-paths: ${{ github.workspace }}/target/nextest/ci/*junit.xml
           org-slug: trunk
