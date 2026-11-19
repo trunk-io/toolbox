@@ -26,11 +26,12 @@ jobs:
       - name: Upload test results
         # Run this step even if the test step ahead fails
         if: "!cancelled()"
-        uses: trunk-io/analytics-uploader@v2
+        uses: trunk-io/analytics-uploader@main
         with:
           junit-paths: ${{ github.workspace }}/target/nextest/ci/*junit.xml
           org-slug: trunk
-          token: ${{ secrets.TRUNK_PROD_ORG_API_TOKEN }}
+          token: ${{ secrets.TRUNK_PROD_V2_TEST_UPLOAD_TOKEN }}
+          test-collection-id: HilUwBm9
         continue-on-error: true
 
   trunk_check_runner:
