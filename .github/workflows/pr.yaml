@@ -26,7 +26,7 @@ jobs:
       - name: Upload test results
         # Run this step even if the test step ahead fails
         if: "!cancelled()"
-        uses: trunk-io/analytics-uploader@main
+        uses: trunk-io/analytics-uploader@v2
         with:
           junit-paths: ${{ github.workspace }}/target/nextest/ci/*junit.xml
           org-slug: trunk
